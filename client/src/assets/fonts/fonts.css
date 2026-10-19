@@ -1,0 +1,42 @@
+@font-face {
+  font-family: "Ferrite";
+  src: url("./FerriteCoreDX-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Ferrite";
+  src: url("./FerriteCoreDX-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+
+@font-face {
+  font-family: "jost";
+  src: url("./jost-VF.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Fanwood";
+  src: url("./jost-Italic-VF.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+.jost {
+  font-family: "Jost", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.space-grotesk {
+  font-family: "Space Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}

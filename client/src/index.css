@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "./assets/fonts/fonts.css";
+
+@theme {
+  --font-ferrite: "Ferrite", "serif";
+  --font-jost: "Jost", "sans-serif";
+  --font-space-grotesk: "Space Grotesk", "sans-serif";
+  --color-blue: #213e64;
+  --color-light-blue: #d2e0f3;
+}
