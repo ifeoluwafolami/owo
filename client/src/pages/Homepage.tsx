@@ -4,10 +4,13 @@ import SavingsGoalCard from "../components/SavingsGoalCard";
 import ExpenseCard from "../components/ExpenseCard";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import appData from "../data/appData.json";
 
 export default function Homepage() {
     const [stopBounce, setStopBounce] = useState(false);
     const [expensesReplay, setExpensesReplay] = useState(0);
+    const featuredSavingsGoal = appData.savingsGoals[0];
+    const featuredExpense = appData.recentExpenses[0];
     useEffect(() => {
         if (!stopBounce) return;
 
@@ -76,9 +79,9 @@ export default function Homepage() {
                                 </div>
                                 
                                 <SavingsGoalCard
-                                    title="Trip to Senegal!"
-                                    targetAmount={2_000_000}
-                                    savedAmount={1_123_000}
+                                    title={featuredSavingsGoal.title}
+                                    targetAmount={featuredSavingsGoal.targetAmount}
+                                    savedAmount={featuredSavingsGoal.savedAmount}
                                 />
                                 
                                 <p className="text-center">Saving up for rent, an emergency fund, a new phone or a vacation? Crush your saving targets with OWO!</p>
@@ -95,10 +98,10 @@ export default function Homepage() {
                                 </div>
                                 
                                 <ExpenseCard
-                                    expenseName="Market groceries"
-                                    amount={18_500}
-                                    category="Food & Groceries"
-                                    categoryBudget={150_000}
+                                    expenseName={featuredExpense.expenseName}
+                                    amount={featuredExpense.amount}
+                                    category={featuredExpense.category}
+                                    categoryBudget={featuredExpense.categoryBudget}
                                     replaySignal={expensesReplay}
                                     className="w-[85%]"
                                 />

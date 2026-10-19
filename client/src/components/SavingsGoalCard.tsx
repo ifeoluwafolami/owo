@@ -81,11 +81,11 @@ export default function SavingsGoalCard({
             <div className="mt-4 flex justify-between gap-4 text-sm">
                 <div>
                     <p className="opacity-60">Saved</p>
-                    <p className="text-lg font-semibold">{currencyFormatter.format(savedAmount)}</p>
+                    <p className="text-lg font-semibold tracking-wider">{currencyFormatter.format(savedAmount)}</p>
                 </div>
                 <div className="text-right">
                     <p className="opacity-60">Target</p>
-                    <p className="text-lg font-semibold">{currencyFormatter.format(targetAmount)}</p>
+                    <p className="text-lg font-semibold tracking-wider">{currencyFormatter.format(targetAmount)}</p>
                 </div>
             </div>
         </div>

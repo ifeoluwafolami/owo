@@ -1,0 +1,140 @@
+{
+  "user": {
+    "firstName": "Ifeoluwa",
+    "fullName": "Ifeoluwa Folami"
+  },
+  "overviewStats": [
+    {
+      "id": "total-saved",
+      "title": "Total saved",
+      "amount": 1123000,
+      "icon": "piggyBank",
+      "supportingText": "Across all savings targets"
+    },
+    {
+      "id": "saved-this-month",
+      "title": "Saved this month",
+      "amount": 185000,
+      "icon": "target",
+      "supportingText": "Added in the current month"
+    },
+    {
+      "id": "spent-this-month",
+      "title": "Spent this month",
+      "amount": 268500,
+      "icon": "circleDollarSign",
+      "supportingText": "From all budget categories"
+    },
+    {
+      "id": "remaining-budget",
+      "title": "Remaining budget",
+      "amount": 431500,
+      "icon": "walletCards",
+      "supportingText": "Available for the rest of the month"
+    }
+  ],
+  "savingsStats": [
+    {
+      "id": "total-saved",
+      "title": "Total saved",
+      "amount": 11123000,
+      "icon": "piggyBank",
+      "supportingText": "Across all savings targets"
+    },
+    {
+      "id": "total-target",
+      "title": "Total target",
+      "amount": 14000000,
+      "icon": "target",
+      "supportingText": "Your combined savings goal"
+    },
+    {
+      "id": "saved-this-month",
+      "title": "Saved this month",
+      "amount": 185000,
+      "icon": "circleDollarSign",
+      "supportingText": "Added in the current month"
+    },
+    {
+      "id": "left-to-save",
+      "title": "Left to save",
+      "amount": 2877000,
+      "icon": "walletCards",
+      "supportingText": "Remaining across all targets"
+    }
+  ],
+  "savingsGoals": [
+    {
+      "id": "senegal-trip",
+      "title": "Trip to Senegal!",
+      "targetAmount": 2000000,
+      "savedAmount": 1123000
+    },
+    {
+      "id": "hyundai-tucson",
+      "title": "Hyundai Tucson",
+      "targetAmount": 5000000,
+      "savedAmount": 4600000
+    },
+    {
+      "id": "house-rent",
+      "title": "House Rent",
+      "targetAmount": 2000000,
+      "savedAmount": 800000
+    },
+    {
+      "id": "emergency-funds",
+      "title": "Emergency Funds",
+      "targetAmount": 5000000,
+      "savedAmount": 4600000
+    }
+  ],
+  "recentExpenses": [
+    {
+      "id": "market-groceries",
+      "expenseName": "Market groceries",
+      "amount": 18500,
+      "category": "Food & Groceries",
+      "categoryBudget": 150000,
+      "date": "19 Oct 2026"
+    },
+    {
+      "id": "uber-ride",
+      "expenseName": "Uber ride",
+      "amount": 8500,
+      "category": "Transportation",
+      "categoryBudget": 75000,
+      "date": "18 Oct 2026"
+    },
+    {
+      "id": "data-subscription",
+      "expenseName": "Data subscription",
+      "amount": 12000,
+      "category": "Utilities",
+      "categoryBudget": 80000,
+      "date": "17 Oct 2026"
+    }
+  ],
+  "welcomeMessages": {
+    "morning": [
+      ["Hello, sunshine!", "Let’s make today a no-regrets spending day."],
+      ["Good morning, {firstName}!", "Let’s keep your wallet out of trouble today."],
+      ["It's a new day.", "No room for excuses!"]
+    ],
+    "afternoon": [
+      ["Halfway through the day.", "How's your wallet holding up?"],
+      ["Midday check-in!", "Catch me up on your finances!"],
+      ["Good afternoon, {firstName}", "Catch me up on your day!"]
+    ],
+    "evening": [
+      ["The day is winding down.", "Let's see where it all went."],
+      ["Good evening, {firstName}!", "Log whatever you spent today, we won’t judge. Much."],
+      ["Hello, {firstName}.", "Was today a good money day?"]
+    ],
+    "night": [
+      ["Burning the midnight oil, {firstName}?", "Keep your hands off the “add to cart” button."],
+      ["Good night, {firstName}.", "One last look, then bed."],
+      ["Hi, {firstName}!", "We love a late night check in."]
+    ]
+  }
+}

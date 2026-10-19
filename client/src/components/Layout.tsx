@@ -1,6 +1,7 @@
 import { LayoutDashboard, LogOut, PiggyBank, ReceiptText, Settings, User, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import appData from "../data/appData.json";
 
 interface LayoutProps {
     children: ReactNode;
@@ -61,7 +62,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                 >
                     <Link
                         to="/"
-                        className="flex h-20 w-full shrink-0 items-center justify-center font-ferrite text-2xl font-medium tracking-widest"
+                        className="flex h-20 w-full shrink-0 items-center justify-center font-ferrite text-2xl font-medium tracking-widest transition-all duration-300 group-hover/sidebar:justify-start group-hover/sidebar:px-6 group-focus-within/sidebar:justify-start group-focus-within/sidebar:px-6 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:px-6"
                     >
                         OWO
                     </Link>
@@ -76,7 +77,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                     type="button"
                                     aria-current={isActive ? "page" : undefined}
                                     onClick={() => navigate(path)}
-                                    className={`flex h-12 w-full items-center justify-center gap-0 rounded-xl font-ferrite font-medium uppercase tracking-widest transition-all duration-200 hover:bg-light-blue hover:text-blue group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-3 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-3 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-3 ${isActive ? "group-hover/sidebar:bg-light-blue group-hover/sidebar:text-blue group-hover/sidebar:shadow-sm group-focus-within/sidebar:bg-light-blue group-focus-within/sidebar:text-blue group-focus-within/sidebar:shadow-sm group-data-[profile-open=true]/sidebar:bg-light-blue group-data-[profile-open=true]/sidebar:text-blue group-data-[profile-open=true]/sidebar:shadow-sm" : ""}`}
+                                    className={`flex h-12 w-full items-center justify-center gap-0 rounded-xl font-ferrite font-medium uppercase tracking-widest transition-all duration-200 hover:bg-light-blue/80 hover:text-blue group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-3 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-3 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-3 ${isActive ? "group-hover/sidebar:bg-light-blue group-hover/sidebar:text-blue group-hover/sidebar:shadow-sm group-focus-within/sidebar:bg-light-blue group-focus-within/sidebar:text-blue group-focus-within/sidebar:shadow-sm group-data-[profile-open=true]/sidebar:bg-light-blue group-data-[profile-open=true]/sidebar:text-blue group-data-[profile-open=true]/sidebar:shadow-sm" : ""}`}
                                 >
                                     <span className={`grid size-10 shrink-0 place-items-center rounded-xl transition-all duration-200 ${isActive ? "bg-light-blue text-blue shadow-sm group-hover/sidebar:bg-transparent group-hover/sidebar:shadow-none group-focus-within/sidebar:bg-transparent group-focus-within/sidebar:shadow-none group-data-[profile-open=true]/sidebar:bg-transparent group-data-[profile-open=true]/sidebar:shadow-none" : ""}`}>
                                         <Icon className="size-6" aria-hidden="true" />
@@ -136,7 +137,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                 <User className="size-5" />
                             </span>
                             <span className="max-w-0 overflow-hidden whitespace-nowrap font-space-grotesk opacity-0 transition-all duration-200 group-hover/sidebar:max-w-40 group-hover/sidebar:opacity-100 group-focus-within/sidebar:max-w-40 group-focus-within/sidebar:opacity-100 group-data-[profile-open=true]/sidebar:max-w-40 group-data-[profile-open=true]/sidebar:opacity-100">
-                                Ifeoluwa Folami
+                                {appData.user.fullName}
                             </span>
                         </button>
                     </div>

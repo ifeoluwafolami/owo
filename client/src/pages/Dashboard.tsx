@@ -5,30 +5,15 @@ import { CircleDollarSign, PiggyBank, Target, WalletCards } from "lucide-react";
 import { useState } from "react";
 import SavingsGoalCard from "../components/SavingsGoalCard";
 import ExpenseCard from "../components/ExpenseCard";
+import { getWelcomeMessage } from "../welcomeMessage";
+import appData from "../data/appData.json";
 
-type WelcomeMessage = [string, string];
-
-function selectMessage(messages: WelcomeMessage[], index: number) {
-    return messages[index % messages.length];
-}
-
-function getWelcomeMessage(): WelcomeMessage {
-    const firstName = "Ifeoluwa";
-
-    const morningMessages: WelcomeMessage[] = [["Hello, sunshine!", "Let’s make today a no-regrets spending day."], [`Good morning, ${firstName}!`, "Let’s keep your wallet out of trouble today."], ["It's a new day.", "No room for excuses!"]];
-    const afternoonMessages: WelcomeMessage[] = [["Halfway through the day.", "How's your wallet holding up?"], ["Midday check-in!", "Catch me up on your finances!"], [`Good afternoon, ${firstName}`, "Catch me up on your day!"]];
-    const eveningMessages: WelcomeMessage[] = [["The day is winding down.", "Let's see where it all went."], [`Good evening, ${firstName}!`, "Log whatever you spent today, we won’t judge. Much."], [`Hello, ${firstName}.`, "Was today a good money day?"]];
-    const nightMessages: WelcomeMessage[] = [[`Burning the midnight oil, ${firstName}?`, "Keep your hands off the “add to cart” button."], [`Good night, ${firstName}.`, "One last look, then bed."], [`Hi, ${firstName}!`, "We love a late night check in."]];
-
-    const time = new Date();
-    const messageIndex = time.getDate();
-    const hour = time.getHours();
-
-    if (hour < 12) return selectMessage(morningMessages, messageIndex);
-    if (hour <= 18) return selectMessage(afternoonMessages, messageIndex);
-    if (hour < 21) return selectMessage(eveningMessages, messageIndex);
-    return selectMessage(nightMessages, messageIndex);
-}
+const statIcons = {
+    piggyBank: PiggyBank,
+    target: Target,
+    circleDollarSign: CircleDollarSign,
+    walletCards: WalletCards,
+};
 
 export default function Overview() {
     const [welcomeMessage] = useState(getWelcomeMessage);
@@ -48,30 +33,15 @@ export default function Overview() {
                 
                 
                 <div className="grid w-full grid-cols-1 gap-4 rounded-2xl bg-blue/20 p-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <OverviewCard
-                        title="Total saved"
-                        amount={1_123_000}
-                        icon={PiggyBank}
-                        supportingText="Across all savings targets"
-                    />
-                    <OverviewCard
-                        title="Saved this month"
-                        amount={185_000}
-                        icon={Target}
-                        supportingText="Added in the current month"
-                    />
-                    <OverviewCard
-                        title="Spent this month"
-                        amount={268_500}
-                        icon={CircleDollarSign}
-                        supportingText="From all budget categories"
-                    />
-                    <OverviewCard
-                        title="Remaining budget"
-                        amount={431_500}
-                        icon={WalletCards}
-                        supportingText="Available for the rest of the month"
-                    />
+                    {appData.overviewStats.map((stat) => (
+                        <OverviewCard
+                            key={stat.id}
+                            title={stat.title}
+                            amount={stat.amount}
+                            icon={statIcons[stat.icon as keyof typeof statIcons]}
+                            supportingText={stat.supportingText}
+                        />
+                    ))}
                 </div>
 
                 <div className="mt-12 flex flex-col gap-6">
@@ -84,30 +54,17 @@ export default function Overview() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 rounded-2xl bg-blue/20 p-4 lg:grid-cols-3">
-                        <ExpenseCard
-                            expenseName="Market groceries"
-                            amount={18_500}
-                            category="Food & Groceries"
-                            categoryBudget={150_000}
-                            date="19 Oct 2026"
-                            className="transition duration-300 hover:scale-102"
-                        />
-                        <ExpenseCard
-                            expenseName="Uber ride"
-                            amount={8_500}
-                            category="Transportation"
-                            categoryBudget={75_000}
-                            date="18 Oct 2026"
-                            className="transition duration-300 hover:scale-102"
-                        />
-                        <ExpenseCard
-                            expenseName="Data subscription"
-                            amount={12_000}
-                            category="Utilities"
-                            categoryBudget={80_000}
-                            date="17 Oct 2026"
-                            className="transition duration-300 hover:scale-102"
-                        />
+                        {appData.recentExpenses.map((expense) => (
+                            <ExpenseCard
+                                key={expense.id}
+                                expenseName={expense.expenseName}
+                                amount={expense.amount}
+                                category={expense.category}
+                                categoryBudget={expense.categoryBudget}
+                                date={expense.date}
+                                className="transition duration-300 hover:scale-102"
+                            />
+                        ))}
                     </div>
                 </div>
 
@@ -121,32 +78,15 @@ export default function Overview() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-6 rounded-2xl bg-blue/20 p-4">
-                        <SavingsGoalCard
-                            title="Trip to Senegal!"
-                            targetAmount={2_000_000}
-                            savedAmount={1_123_000}
-                            className="hover:scale-102 transition duration-300"
-                        /> 
-
-                        <SavingsGoalCard
-                            title="Hyundai Tucson"
-                            targetAmount={5_000_000}
-                            savedAmount={4_600_000}
-                            className="hover:scale-102 transition duration-300"
-                        /> 
-                        <SavingsGoalCard
-                            title="House Rent"
-                            targetAmount={2_000_000}
-                            savedAmount={800_000}
-                            className="hover:scale-102 transition duration-300"
-                        /> 
-
-                        <SavingsGoalCard
-                            title="Emergency Funds"
-                            targetAmount={5_000_000}
-                            savedAmount={4_600_000}
-                            className="hover:scale-102 transition duration-300"
-                        />        
+                        {appData.savingsGoals.map((goal) => (
+                            <SavingsGoalCard
+                                key={goal.id}
+                                title={goal.title}
+                                targetAmount={goal.targetAmount}
+                                savedAmount={goal.savedAmount}
+                                className="transition duration-300 hover:scale-102"
+                            />
+                        ))}
                     </div>
 
                     
