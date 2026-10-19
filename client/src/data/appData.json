@@ -68,25 +68,66 @@
       "id": "senegal-trip",
       "title": "Trip to Senegal!",
       "targetAmount": 2000000,
-      "savedAmount": 1123000
+      "savedAmount": 1123000,
+      "targetDate": "2027-02-15"
     },
     {
       "id": "hyundai-tucson",
       "title": "Hyundai Tucson",
       "targetAmount": 5000000,
-      "savedAmount": 4600000
+      "savedAmount": 4600000,
+      "targetDate": "2027-12-01"
     },
     {
       "id": "house-rent",
       "title": "House Rent",
       "targetAmount": 2000000,
-      "savedAmount": 800000
+      "savedAmount": 800000,
+      "targetDate": "2027-05-01"
     },
     {
       "id": "emergency-funds",
       "title": "Emergency Funds",
       "targetAmount": 5000000,
-      "savedAmount": 4600000
+      "savedAmount": 4600000,
+      "targetDate": "2027-10-19"
+    }
+  ],
+  "savingsHistory": [
+    {
+      "id": "saving-1",
+      "goalId": "senegal-trip",
+      "goalTitle": "Trip to Senegal!",
+      "amount": 50000,
+      "date": "2026-10-18"
+    },
+    {
+      "id": "saving-2",
+      "goalId": "emergency-funds",
+      "goalTitle": "Emergency Funds",
+      "amount": 65000,
+      "date": "2026-10-14"
+    },
+    {
+      "id": "saving-3",
+      "goalId": "hyundai-tucson",
+      "goalTitle": "Hyundai Tucson",
+      "amount": 40000,
+      "date": "2026-10-08"
+    },
+    {
+      "id": "saving-4",
+      "goalId": "house-rent",
+      "goalTitle": "House Rent",
+      "amount": 30000,
+      "date": "2026-10-02"
+    },
+    {
+      "id": "saving-5",
+      "goalId": "senegal-trip",
+      "goalTitle": "Trip to Senegal!",
+      "amount": 75000,
+      "date": "2026-09-25"
     }
   ],
   "recentExpenses": [

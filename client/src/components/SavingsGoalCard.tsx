@@ -4,6 +4,7 @@ interface SavingsGoalCardProps {
     title: string;
     targetAmount: number;
     savedAmount: number;
+    targetDate?: string;
     className?: string;
 }
 
@@ -17,6 +18,7 @@ export default function SavingsGoalCard({
     title,
     targetAmount,
     savedAmount,
+    targetDate,
     className = "",
 }: SavingsGoalCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,11 @@ export default function SavingsGoalCard({
                 <div>
                     {/* <p className="mb-2 text-sm tracking-widest uppercase opacity-70">Savings target</p> */}
                     <h4 className="text-2xl font-semibold capitalize tracking-wide">{title}</h4>
+                    {targetDate && (
+                        <p className="mt-1 text-sm text-blue/60 uppercase">
+                            {new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(targetDate))}
+                        </p>
+                    )}
                 </div>
                 <span className="rounded-full bg-blue px-3 py-1 text-sm font-semibold text-light-blue">
                     {progress.toFixed(0)}%

@@ -5,6 +5,7 @@ import Modal from "../components/Modal";
 import LoginImage from "../assets/login.jpg";
 import SignupImage from "../assets/signup.jpg";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 
 type AuthMode = "login" | "signup";
 
@@ -56,11 +57,16 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
     return (
         <Layout>
             <div className="flex h-screen overflow-hidden">
-                <div
-                    className={`hidden h-full flex-1 bg-cover ${isSignup ? "bg-center order-2" : "bg-left"} bg-no-repeat lg:block`}
-                    style={{ backgroundImage: `url(${isSignup ? SignupImage : LoginImage})` }}
-                    aria-hidden="true"
-                />
+                <div className="relative hidden h-full flex-1 overflow-hidden lg:block" aria-hidden="true">
+                    <div
+                        className={`absolute inset-0 bg-cover bg-left bg-no-repeat transition-opacity duration-700 ease-in-out ${isSignup ? "opacity-0" : "opacity-100"}`}
+                        style={{ backgroundImage: `url(${LoginImage})` }}
+                    />
+                    <div
+                        className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out ${isSignup ? "opacity-100" : "opacity-0"}`}
+                        style={{ backgroundImage: `url(${SignupImage})` }}
+                    />
+                </div>
 
                 <div className="relative h-full flex-1 overflow-x-hidden overflow-y-auto">
                     {/* <div
@@ -69,7 +75,15 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                     /> */}
 
                     <div className="relative z-10 flex min-h-full items-center justify-center px-6 py-10 sm:px-10">
-                        <div className="w-full max-w-md text-blue flex flex-col justify-between h-full">
+                        <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                            key={mode}
+                            initial={{ opacity: 0, x: 18 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -18 }}
+                            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                            className="flex h-full w-full max-w-md flex-col justify-between text-blue"
+                        >
                             <div className="flex flex-col">
                                 <Link to="/">
                                     <p className="mb-4 text-center font-ferrite text-4xl tracking-widest">OWO</p>
@@ -161,7 +175,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                                     setIsResetLinkSent(false);
                                                     setIsForgotPasswordOpen(true);
                                                 }}
-                                                className="text-sm font-semibold text-blue/70 underline-offset-4 transition hover:text-blue hover:underline"
+                                                className="text-sm font-semibold text-blue underline-offset-4 uppercase transition hover:scale-102 cursor-pointer hover:underline"
                                             >
                                                 Forgot password?
                                             </button>
@@ -184,7 +198,8 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                 </form>
                             </div>
                             
-                        </div>
+                        </motion.div>
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>

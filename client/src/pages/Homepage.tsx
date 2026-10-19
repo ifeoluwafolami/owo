@@ -82,6 +82,7 @@ export default function Homepage() {
                                     title={featuredSavingsGoal.title}
                                     targetAmount={featuredSavingsGoal.targetAmount}
                                     savedAmount={featuredSavingsGoal.savedAmount}
+                                    targetDate={featuredSavingsGoal.targetDate}
                                 />
                                 
                                 <p className="text-center">Saving up for rent, an emergency fund, a new phone or a vacation? Crush your saving targets with OWO!</p>

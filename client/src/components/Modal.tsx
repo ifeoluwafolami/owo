@@ -6,9 +6,10 @@ interface ModalProps {
     onClose: () => void;
     title: string;
     children: ReactNode;
+    size?: "default" | "large";
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = "default" }: ModalProps) {
     const titleId = useId();
     const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +54,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className="relative w-full max-w-lg rounded-3xl bg-light-blue p-7 text-blue shadow-2xl"
+                className={`relative max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-3xl bg-light-blue p-7 text-blue shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${size === "large" ? "max-w-3xl" : "max-w-lg"}`}
             >
                 <button
                     type="button"
@@ -63,7 +64,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
                 >
                     ×
                 </button>
-                <h2 id={titleId} className="pr-12 font-ferrite text-2xl uppercase tracking-wide">
+                <h2 id={titleId} className="pr-12 font-ferrite text-xl font-medium uppercase tracking-wide">
                     {title}
                 </h2>
                 <div className="mt-8">{children}</div>

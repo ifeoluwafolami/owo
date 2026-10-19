@@ -84,6 +84,7 @@ export default function Overview() {
                                 title={goal.title}
                                 targetAmount={goal.targetAmount}
                                 savedAmount={goal.savedAmount}
+                                targetDate={goal.targetDate}
                                 className="transition duration-300 hover:scale-102"
                             />
                         ))}
