@@ -18,6 +18,9 @@ type CalendarInputProps =
       };
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const monthNames = Array.from({ length: 12 }, (_, month) =>
+    new Intl.DateTimeFormat("en-NG", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(2026, month, 1))),
+);
 
 const monthFormatter = new Intl.DateTimeFormat("en-NG", {
     month: "long",
@@ -49,6 +52,7 @@ export default function CalendarInput(props: CalendarInputProps) {
     const triggerRef = useRef<HTMLButtonElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [isMonthYearOpen, setIsMonthYearOpen] = useState(false);
     const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
     const selectedAnchor = props.mode === "single" ? props.value : props.endDate || props.startDate;
     const [visibleMonth, setVisibleMonth] = useState(() =>
@@ -123,8 +127,20 @@ export default function CalendarInput(props: CalendarInputProps) {
         });
     }, [visibleMonth]);
 
+    const availableYears = useMemo(() => {
+        const currentYear = new Date().getUTCFullYear();
+        const visibleYear = visibleMonth.getUTCFullYear();
+        const firstYear = Math.min(1900, visibleYear);
+        const lastYear = Math.max(currentYear + 50, visibleYear);
+        return Array.from({ length: lastYear - firstYear + 1 }, (_, index) => lastYear - index);
+    }, [visibleMonth]);
+
     const moveMonth = (offset: number) => {
         setVisibleMonth((month) => new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + offset, 1)));
+    };
+
+    const moveYear = (offset: number) => {
+        setVisibleMonth((month) => new Date(Date.UTC(month.getUTCFullYear() + offset, month.getUTCMonth(), 1)));
     };
 
     const selectDate = (date: Date) => {
@@ -164,7 +180,10 @@ export default function CalendarInput(props: CalendarInputProps) {
             <button
                 ref={triggerRef}
                 type="button"
-                onClick={() => setIsOpen((open) => !open)}
+                onClick={() => setIsOpen((open) => {
+                    if (!open) setIsMonthYearOpen(false);
+                    return !open;
+                })}
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
                 className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-blue/20 bg-white/50 px-4 text-left outline-none transition hover:border-blue/40 focus:border-blue focus:ring-2 focus:ring-blue/15"
@@ -184,63 +203,104 @@ export default function CalendarInput(props: CalendarInputProps) {
                     <div className="mb-3 flex items-center justify-between">
                         <button
                             type="button"
-                            onClick={() => moveMonth(-1)}
-                            aria-label="Previous month"
+                            onClick={() => isMonthYearOpen ? moveYear(-1) : moveMonth(-1)}
+                            aria-label={isMonthYearOpen ? "Previous year" : "Previous month"}
                             className="grid size-8 place-items-center rounded-lg bg-blue/10 transition hover:bg-blue hover:text-light-blue"
                         >
                             <ChevronLeft className="size-4" />
                         </button>
-                        <p className="font-ferrite text-sm uppercase tracking-wider">{monthFormatter.format(visibleMonth)}</p>
                         <button
                             type="button"
-                            onClick={() => moveMonth(1)}
-                            aria-label="Next month"
+                            onClick={() => setIsMonthYearOpen((open) => !open)}
+                            aria-expanded={isMonthYearOpen}
+                            className="rounded-lg px-3 py-2 font-ferrite text-sm uppercase tracking-wider transition hover:bg-blue/10"
+                            title="Choose month and year"
+                        >
+                            {monthFormatter.format(visibleMonth)}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => isMonthYearOpen ? moveYear(1) : moveMonth(1)}
+                            aria-label={isMonthYearOpen ? "Next year" : "Next month"}
                             className="grid size-8 place-items-center rounded-lg bg-blue/10 transition hover:bg-blue hover:text-light-blue"
                         >
                             <ChevronRight className="size-4" />
                         </button>
                     </div>
 
-                    <div className="mb-2 grid grid-cols-7 text-center text-[0.7rem] font-semibold uppercase tracking-wider text-blue/50">
-                        {weekdays.map((weekday) => (
-                            <span key={weekday} className="py-1">{weekday}</span>
-                        ))}
-                    </div>
+                    {isMonthYearOpen ? (
+                        <div>
+                            <label className="block text-xs font-semibold uppercase tracking-widest text-blue/55">
+                                Year
+                                <select
+                                    value={visibleMonth.getUTCFullYear()}
+                                    onChange={(event) => setVisibleMonth((month) => new Date(Date.UTC(Number(event.target.value), month.getUTCMonth(), 1)))}
+                                    className="mt-2 h-11 w-full rounded-xl border border-blue/20 bg-white/50 px-3 text-sm font-semibold outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
+                                >
+                                    {availableYears.map((year) => <option key={year} value={year}>{year}</option>)}
+                                </select>
+                            </label>
 
-                    <div className="grid grid-cols-7 gap-y-1">
-                        {calendarDays.map((date) => {
-                            const value = toDateValue(date);
-                            const isCurrentMonth = date.getUTCMonth() === visibleMonth.getUTCMonth();
-                            const isBoundary = value === startDate || value === endDate;
-                            const isInRange = props.mode === "range" && Boolean(startDate && endDate && value > startDate && value < endDate);
-
-                            return (
-                                <div key={value} className={`flex justify-center py-0.5 ${isInRange ? "bg-blue/10" : ""}`}>
+                            <div className="mt-3 grid grid-cols-3 gap-2">
+                                {monthNames.map((month, index) => (
                                     <button
+                                        key={month}
                                         type="button"
-                                        disabled={!isCurrentMonth}
-                                        onClick={() => selectDate(date)}
-                                        aria-label={selectionFormatter.format(date)}
-                                        aria-pressed={isBoundary}
-                                        className={`grid size-8 place-items-center rounded-lg text-xs transition ${
-                                            isBoundary
-                                                ? "bg-blue font-bold text-light-blue shadow-md"
-                                                : isCurrentMonth
-                                                  ? "hover:bg-blue/15"
-                                                  : "cursor-default text-blue/20"
-                                        }`}
+                                        onClick={() => {
+                                            setVisibleMonth((date) => new Date(Date.UTC(date.getUTCFullYear(), index, 1)));
+                                            setIsMonthYearOpen(false);
+                                        }}
+                                        className={`h-10 rounded-xl text-xs font-semibold uppercase tracking-wide transition ${visibleMonth.getUTCMonth() === index ? "bg-blue text-light-blue" : "bg-blue/10 hover:bg-blue/20"}`}
                                     >
-                                        {date.getUTCDate()}
+                                        {month}
                                     </button>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mb-2 grid grid-cols-7 text-center text-[0.7rem] font-semibold uppercase tracking-wider text-blue/50">
+                                {weekdays.map((weekday) => (
+                                    <span key={weekday} className="py-1">{weekday}</span>
+                                ))}
+                            </div>
 
-                    {props.mode === "range" && (
-                        <p className="mt-3 border-t border-blue/10 pt-3 text-center text-xs text-blue/55">
-                            {props.startDate && !props.endDate ? "Now choose an end date" : "Choose a start and end date"}
-                        </p>
+                            <div className="grid grid-cols-7 gap-y-1">
+                                {calendarDays.map((date) => {
+                                    const value = toDateValue(date);
+                                    const isCurrentMonth = date.getUTCMonth() === visibleMonth.getUTCMonth();
+                                    const isBoundary = value === startDate || value === endDate;
+                                    const isInRange = props.mode === "range" && Boolean(startDate && endDate && value > startDate && value < endDate);
+
+                                    return (
+                                        <div key={value} className={`flex justify-center py-0.5 ${isInRange ? "bg-blue/10" : ""}`}>
+                                            <button
+                                                type="button"
+                                                disabled={!isCurrentMonth}
+                                                onClick={() => selectDate(date)}
+                                                aria-label={selectionFormatter.format(date)}
+                                                aria-pressed={isBoundary}
+                                                className={`grid size-8 place-items-center rounded-lg text-xs transition ${
+                                                    isBoundary
+                                                        ? "bg-blue font-bold text-light-blue shadow-md"
+                                                        : isCurrentMonth
+                                                          ? "hover:bg-blue/15"
+                                                          : "cursor-default text-blue/20"
+                                                }`}
+                                            >
+                                                {date.getUTCDate()}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {props.mode === "range" && (
+                                <p className="mt-3 border-t border-blue/10 pt-3 text-center text-xs text-blue/55">
+                                    {props.startDate && !props.endDate ? "Now choose an end date" : "Choose a start and end date"}
+                                </p>
+                            )}
+                        </>
                     )}
                 </div>,
                 document.body,

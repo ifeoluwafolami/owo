@@ -8,3 +8,24 @@
   --color-blue: #213e64;
   --color-light-blue: #d2e0f3;
 }
+
+:root,
+:root[data-theme="ocean"] {
+  --color-blue: #213e64;
+  --color-light-blue: #d2e0f3;
+}
+
+:root[data-theme="monochroma"] {
+  --color-blue: #202020;
+  --color-light-blue: #f0f0ec;
+}
+
+:root[data-theme="rose"] {
+  --color-blue: #713352;
+  --color-light-blue: #f4dce8;
+}
+
+:root[data-theme="amethyst"] {
+  --color-blue: #4c3575;
+  --color-light-blue: #e5dcf5;
+}

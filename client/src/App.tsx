@@ -8,6 +8,7 @@ import Spending from './pages/Spending'
 import Overview from './pages/Overview'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
+import Settings from './pages/Settings'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/savings" element={<Savings />} />
         <Route path="/spending" element={<Spending />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
 
         <Route path="/*" element={<NotFound />} />
 

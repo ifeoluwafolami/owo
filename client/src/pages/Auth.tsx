@@ -4,8 +4,10 @@ import Layout from "../components/Layout";
 import Modal from "../components/Modal";
 import LoginImage from "../assets/login.jpg";
 import SignupImage from "../assets/signup.jpg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
+import Onboarding from "../components/Onboarding";
+import { Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "login" | "signup";
 
@@ -35,14 +37,23 @@ function AppleIcon() {
 }
 
 export default function Auth({ initialMode = "login" }: AuthProps) {
+    const navigate = useNavigate();
     const [mode, setMode] = useState<AuthMode>(initialMode);
     const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
     const [resetEmail, setResetEmail] = useState("");
     const [isResetLinkSent, setIsResetLinkSent] = useState(false);
+    const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const isSignup = mode === "signup";
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (isSignup) {
+            setIsOnboardingOpen(true);
+        } else {
+            navigate("/overview");
+        }
     };
 
     const closeForgotPassword = useCallback(() => {
@@ -164,7 +175,18 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
 
                                     <label className="block space-y-1.5 text-sm font-semibold">
                                         <span>Password</span>
-                                        <input className={inputClasses} type="password" name="password" autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" required />
+                                        <div className="relative">
+                                            <input className={`${inputClasses} pr-12`} type={showPassword ? "text" : "password"} name="password" autoComplete={isSignup ? "new-password" : "current-password"} placeholder="Enter your password" required />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword((visible) => !visible)}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                                aria-pressed={showPassword}
+                                                className="absolute inset-y-0 right-0 grid w-12 place-items-center text-blue/55 transition hover:text-blue"
+                                            >
+                                                {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                                            </button>
+                                        </div>
                                     </label>
 
                                     {!isSignup && (
@@ -185,7 +207,18 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                     {isSignup && (
                                         <label className="block space-y-1.5 text-sm font-semibold">
                                             <span>Confirm password</span>
-                                            <input className={inputClasses} type="password" name="confirmPassword" autoComplete="new-password" placeholder="Enter your password again" required />
+                                            <div className="relative">
+                                                <input className={`${inputClasses} pr-12`} type={showConfirmPassword ? "text" : "password"} name="confirmPassword" autoComplete="new-password" placeholder="Enter your password again" required />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword((visible) => !visible)}
+                                                    aria-label={showConfirmPassword ? "Hide password confirmation" : "Show password confirmation"}
+                                                    aria-pressed={showConfirmPassword}
+                                                    className="absolute inset-y-0 right-0 grid w-12 place-items-center text-blue/55 transition hover:text-blue"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                                                </button>
+                                            </div>
                                         </label>
                                     )}
 
@@ -238,6 +271,14 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                     </form>
                 )}
             </Modal>
+
+            <Onboarding
+                isOpen={isOnboardingOpen}
+                onComplete={() => {
+                    setIsOnboardingOpen(false);
+                    navigate("/overview");
+                }}
+            />
         </Layout>
     );
 }

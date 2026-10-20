@@ -109,7 +109,10 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                             <button
                                 type="button"
                                 role="menuitem"
-                                onClick={() => setIsProfileMenuOpen(false)}
+                                onClick={() => {
+                                    setIsProfileMenuOpen(false)
+                                    navigate("/settings")
+                                }}
                                 className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest transition duration-200 hover:bg-light-blue hover:text-blue"
                             >
                                 <Settings className="size-6 shrink-0" />
@@ -126,7 +129,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                 className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest transition duration-200 hover:bg-light-blue hover:text-blue"
                             >
                                 <UserRound className="size-6 shrink-0" />
-                                <span className="whitespace-nowrap">My Profile</span>
+                                <span className="whitespace-nowrap">Profile</span>
                             </button>
                             
                             

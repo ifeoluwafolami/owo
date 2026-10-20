@@ -9,6 +9,9 @@ import Modal from "../components/Modal";
 import CalendarInput from "../components/CalendarInput";
 import MoneyInput from "../components/MoneyInput";
 import appData from "../data/appData.json";
+import { ALL_DATA_RESET_KEY, EXPENSE_HISTORY_CLEARED_KEY, NEW_ACCOUNT_KEY, USER_BUDGET_CATEGORIES_KEY, USER_MONTHLY_INCOME_KEY } from "../settingsStorage";
+import EmptyState from "../components/EmptyState";
+import { useSearchParams } from "react-router-dom";
 
 interface BudgetCategory {
     id: string;
@@ -52,27 +55,59 @@ function getExpenseDateKey(date: string) {
     return `${year}-${month}-${day}`;
 }
 
+function getTodayDateValue() {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Africa/Lagos",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+function loadStoredCategories(): BudgetCategory[] | null {
+    const storedCategories = localStorage.getItem(USER_BUDGET_CATEGORIES_KEY);
+    if (!storedCategories) return null;
+
+    try {
+        return JSON.parse(storedCategories) as BudgetCategory[];
+    } catch {
+        return null;
+    }
+}
+
 export default function Spending() {
-    const [salary, setSalary] = useState(appData.spending.salary);
-    const [extraIncome, setExtraIncome] = useState(appData.spending.extraIncome);
-    const [categories, setCategories] = useState<BudgetCategory[]>(appData.spending.budgetCategories);
-    const [expenses, setExpenses] = useState<Expense[]>(appData.recentExpenses);
+    const [searchParams] = useSearchParams();
+    const shouldOpenExpense = searchParams.get("action") === "add-expense";
+    const isAllDataReset = localStorage.getItem(ALL_DATA_RESET_KEY) === "true";
+    const isNewAccount = localStorage.getItem(NEW_ACCOUNT_KEY) === "true";
+    const isExpenseHistoryCleared = localStorage.getItem(EXPENSE_HISTORY_CLEARED_KEY) === "true";
+    const storedCategories = loadStoredCategories();
+    const storedMonthlyIncome = Number(localStorage.getItem(USER_MONTHLY_INCOME_KEY) ?? 0);
+    const initialCategories = isAllDataReset || isNewAccount ? storedCategories ?? [] : storedCategories ?? appData.spending.budgetCategories;
+    const initialSalary = isAllDataReset ? 0 : isNewAccount ? storedMonthlyIncome : appData.spending.salary;
+    const [salary, setSalary] = useState(initialSalary);
+    const [extraIncome, setExtraIncome] = useState(isAllDataReset || isNewAccount ? 0 : appData.spending.extraIncome);
+    const [categories, setCategories] = useState<BudgetCategory[]>(initialCategories);
+    const [expenses, setExpenses] = useState<Expense[]>(isAllDataReset || isExpenseHistoryCleared ? [] : appData.recentExpenses);
     const [isBudgetOpen, setIsBudgetOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-    const [isTransactionOpen, setIsTransactionOpen] = useState(false);
-    const [transactionMode, setTransactionMode] = useState<"income" | "expense">("income");
+    const [isTransactionOpen, setIsTransactionOpen] = useState(shouldOpenExpense);
+    const [transactionMode, setTransactionMode] = useState<"income" | "expense">(shouldOpenExpense ? "expense" : "income");
     const [useDateRange, setUseDateRange] = useState(false);
     const [rangeStart, setRangeStart] = useState("2026-10-01");
     const [rangeEnd, setRangeEnd] = useState("2026-10-19");
-    const [draftSalary, setDraftSalary] = useState(String(appData.spending.salary));
-    const [draftCategories, setDraftCategories] = useState<BudgetCategoryDraft[]>(() => createCategoryDrafts(appData.spending.budgetCategories));
+    const [draftSalary, setDraftSalary] = useState(String(initialSalary));
+    const [draftCategories, setDraftCategories] = useState<BudgetCategoryDraft[]>(() => createCategoryDrafts(initialCategories));
     const [newExpense, setNewExpense] = useState({
         expenseName: "",
         amount: "",
-        categoryId: appData.spending.budgetCategories[0].id,
-        date: "",
+        categoryId: initialCategories[0]?.id ?? "",
+        date: getTodayDateValue(),
     });
     const [newIncome, setNewIncome] = useState({ source: "", amount: "" });
+    const [quickCategory, setQuickCategory] = useState({ name: "", budget: "" });
 
     const totalIncome = salary + extraIncome;
     const totalSpent = categories.reduce((total, category) => total + category.spent, 0);
@@ -185,6 +220,7 @@ export default function Spending() {
         };
 
         setExpenses((currentExpenses) => [expense, ...currentExpenses]);
+        localStorage.removeItem(EXPENSE_HISTORY_CLEARED_KEY);
         setCategories((currentCategories) =>
             currentCategories.map((item) =>
                 item.id === category.id ? { ...item, spent: item.spent + amount } : item,
@@ -194,7 +230,7 @@ export default function Spending() {
             expenseName: "",
             amount: "",
             categoryId: categories[0]?.id ?? "",
-            date: "",
+            date: getTodayDateValue(),
         });
         closeTransaction();
     };
@@ -207,6 +243,22 @@ export default function Spending() {
         setExtraIncome((currentIncome) => currentIncome + amount);
         setNewIncome({ source: "", amount: "" });
         closeTransaction();
+    };
+
+    const handleQuickCategory = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const budget = Number(quickCategory.budget);
+        if (!quickCategory.name.trim() || budget <= 0) return;
+
+        const category: BudgetCategory = {
+            id: `category-${Date.now()}`,
+            name: quickCategory.name.trim(),
+            budget,
+            spent: 0,
+        };
+        setCategories((currentCategories) => [...currentCategories, category]);
+        setNewExpense((expense) => ({ ...expense, categoryId: category.id }));
+        setQuickCategory({ name: "", budget: "" });
     };
 
     return (
@@ -264,9 +316,13 @@ export default function Spending() {
                                 </div>
                             ))
                         ) : (
-                            <p className="w-full rounded-2xl bg-light-blue p-8 text-center text-blue/60">
-                                No budget categories yet. Use Review Budget to create one.
-                            </p>
+                            <EmptyState
+                                icon={WalletCards}
+                                title="No budget categories yet"
+                                description="Create categories and assign monthly limits to start planning your spending."
+                                actionLabel="Create Categories"
+                                onAction={openBudgetReview}
+                            />
                         )}
                     </div>
                 </section>
@@ -280,21 +336,34 @@ export default function Spending() {
                         <Button label="View History" onClick={() => setIsHistoryOpen(true)} />
                     </div>
                     <div className="grid grid-cols-1 gap-6 rounded-2xl bg-blue/20 p-4 lg:grid-cols-3">
-                        {expenses.map((expense) => {
-                            const category = categories.find((item) => item.name === expense.category);
-                            return (
-                                <ExpenseCard
-                                    key={expense.id}
-                                    expenseName={expense.expenseName}
-                                    amount={expense.amount}
-                                    category={expense.category}
-                                    categoryBudget={category?.budget ?? expense.categoryBudget}
-                                    categorySpent={category?.spent}
-                                    date={expense.date}
-                                    animate={false}
-                                />
-                            );
-                        })}
+                        {expenses.length > 0 ? (
+                            expenses.map((expense) => {
+                                const category = categories.find((item) => item.name === expense.category);
+                                return (
+                                    <ExpenseCard
+                                        key={expense.id}
+                                        expenseName={expense.expenseName}
+                                        amount={expense.amount}
+                                        category={expense.category}
+                                        categoryBudget={category?.budget ?? expense.categoryBudget}
+                                        categorySpent={category?.spent}
+                                        date={expense.date}
+                                        animate={false}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <EmptyState
+                                icon={ReceiptText}
+                                title="No expenses recorded"
+                                description={categories.length > 0
+                                    ? "Record your first expense to begin tracking where your money goes."
+                                    : "Create a budget category first, then record your first expense."}
+                                actionLabel={categories.length > 0 ? "Add Expense" : "Create Categories"}
+                                onAction={categories.length > 0 ? () => openTransaction("expense") : openBudgetReview}
+                                className="lg:col-span-3"
+                            />
+                        )}
                     </div>
                 </section>
             </div>
@@ -520,7 +589,34 @@ export default function Spending() {
                         <Button type="submit" label="Add Income" variant="dark" className="w-full" />
                     </form>
                 ) : (
-                    <form onSubmit={handleAddExpense} className="space-y-5" role="tabpanel">
+                    <div role="tabpanel">
+                        {categories.length === 0 && (
+                            <form onSubmit={handleQuickCategory} className="mb-6 rounded-2xl bg-blue/10 p-4">
+                                <h3 className=" uppercase tracking-wide">Create a budget category first</h3>
+                                <p className="mt-1 text-sm text-blue/60">Expenses need a category so they can count towards a budget.</p>
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <input
+                                        type="text"
+                                        value={quickCategory.name}
+                                        onChange={(event) => setQuickCategory((category) => ({ ...category, name: event.target.value }))}
+                                        placeholder="Category name"
+                                        aria-label="Category name"
+                                        className={inputClasses}
+                                        required
+                                    />
+                                    <MoneyInput
+                                        value={quickCategory.budget}
+                                        onValueChange={(budget) => setQuickCategory((category) => ({ ...category, budget }))}
+                                        placeholder="Monthly budget"
+                                        aria-label="Monthly budget"
+                                        required
+                                    />
+                                </div>
+                                <Button type="submit" label="Create Category" variant="dark" className="mt-4 w-full" />
+                            </form>
+                        )}
+
+                        <form onSubmit={handleAddExpense} className={`space-y-5 ${categories.length === 0 ? "opacity-45" : ""}`}>
                         <label className="flex flex-col gap-2 text-sm font-semibold">
                             Expense
                             <input
@@ -572,7 +668,8 @@ export default function Spending() {
                             className="w-full disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
                             disabled={categories.length === 0}
                         />
-                    </form>
+                        </form>
+                    </div>
                 )}
             </Modal>
         </Layout>

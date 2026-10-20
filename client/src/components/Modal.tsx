@@ -7,9 +7,10 @@ interface ModalProps {
     title: string;
     children: ReactNode;
     size?: "default" | "large";
+    mobileFullScreen?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, title, children, size = "default" }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, size = "default", mobileFullScreen = false }: ModalProps) {
     const titleId = useId();
     const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +45,7 @@ export default function Modal({ isOpen, onClose, title, children, size = "defaul
 
     return createPortal(
         <div
-            className="fixed inset-0 z-1000 flex items-center justify-center bg-blue/60 p-4 backdrop-blur-sm"
+            className={`fixed inset-0 z-1000 flex items-center justify-center bg-blue/60 backdrop-blur-sm ${mobileFullScreen ? "p-0 sm:p-4" : "p-4"}`}
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) onClose();
             }}
@@ -54,7 +55,7 @@ export default function Modal({ isOpen, onClose, title, children, size = "defaul
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className={`relative max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-3xl bg-light-blue p-7 text-blue shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${size === "large" ? "max-w-3xl" : "max-w-lg"}`}
+                className={`relative w-full overflow-y-auto bg-light-blue p-7 text-blue shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${size === "large" ? "max-w-3xl" : "max-w-lg"} ${mobileFullScreen ? "h-dvh max-h-dvh rounded-none sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:rounded-3xl" : "max-h-[calc(100vh-2rem)] rounded-3xl"}`}
             >
                 <button
                     type="button"

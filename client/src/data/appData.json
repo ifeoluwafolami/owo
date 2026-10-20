@@ -1,7 +1,11 @@
 {
   "user": {
     "firstName": "Ifeoluwa",
-    "fullName": "Ifeoluwa Folami"
+    "lastName": "Folami",
+    "fullName": "Ifeoluwa Folami",
+    "email": "ifeoluwa.folami@example.com",
+    "birthday": "1998-06-15",
+    "accountCreatedAt": "2026-10-20"
   },
   "overviewStats": [
     {

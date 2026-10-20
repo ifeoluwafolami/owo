@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FormEvent } from "react";
-import { CalendarDays, History } from "lucide-react";
+import { CalendarDays, History, PiggyBank } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
@@ -7,6 +7,21 @@ import SavingsGoalCard from "../components/SavingsGoalCard";
 import CalendarInput from "../components/CalendarInput";
 import MoneyInput from "../components/MoneyInput";
 import appData from "../data/appData.json";
+import { ALL_DATA_RESET_KEY, NEW_ACCOUNT_KEY, USER_SAVINGS_GOALS_KEY } from "../settingsStorage";
+import EmptyState from "../components/EmptyState";
+
+const emptySavingsHistory: typeof appData.savingsHistory = [];
+
+function loadStoredGoals(): typeof appData.savingsGoals | null {
+    const storedGoals = localStorage.getItem(USER_SAVINGS_GOALS_KEY);
+    if (!storedGoals) return null;
+
+    try {
+        return JSON.parse(storedGoals) as typeof appData.savingsGoals;
+    } catch {
+        return null;
+    }
+}
 
 const currencyFormatter = new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -22,7 +37,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-NG", {
 });
 
 export default function Savings() {
-    const [goals, setGoals] = useState(appData.savingsGoals);
+    const isAllDataReset = localStorage.getItem(ALL_DATA_RESET_KEY) === "true";
+    const isNewAccount = localStorage.getItem(NEW_ACCOUNT_KEY) === "true";
+    const storedGoals = loadStoredGoals();
+    const savingsHistory = isAllDataReset || isNewAccount ? emptySavingsHistory : appData.savingsHistory;
+    const [goals, setGoals] = useState(isAllDataReset || isNewAccount ? storedGoals ?? [] : storedGoals ?? appData.savingsGoals);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
     const [useDateRange, setUseDateRange] = useState(false);
@@ -35,20 +54,20 @@ export default function Savings() {
     const totalSaved = goals.reduce((total, goal) => total + goal.savedAmount, 0);
     const totalTarget = goals.reduce((total, goal) => total + goal.targetAmount, 0);
     const overallProgress = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
-    const historyMonth = appData.savingsHistory[0]?.date.slice(0, 7) ?? "";
-    const savedThisMonth = appData.savingsHistory
+    const historyMonth = savingsHistory[0]?.date.slice(0, 7) ?? "";
+    const savedThisMonth = savingsHistory
         .filter((entry) => entry.date.startsWith(historyMonth))
         .reduce((total, entry) => total + entry.amount, 0);
 
     const filteredHistory = useMemo(() => {
-        if (!useDateRange) return appData.savingsHistory;
+        if (!useDateRange) return savingsHistory;
 
-        return appData.savingsHistory.filter((entry) => {
+        return savingsHistory.filter((entry) => {
             const afterStart = !rangeStart || entry.date >= rangeStart;
             const beforeEnd = !rangeEnd || entry.date <= rangeEnd;
             return afterStart && beforeEnd;
         });
-    }, [rangeEnd, rangeStart, useDateRange]);
+    }, [rangeEnd, rangeStart, savingsHistory, useDateRange]);
 
     const rangeTotal = filteredHistory.reduce((total, entry) => total + entry.amount, 0);
 
@@ -137,16 +156,27 @@ export default function Savings() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-6 rounded-2xl bg-blue/20 p-4">
-                        {goals.map((goal) => (
-                            <SavingsGoalCard
-                                key={goal.id}
-                                title={goal.title}
-                                targetAmount={goal.targetAmount}
-                                savedAmount={goal.savedAmount}
-                                targetDate={goal.targetDate}
-                                animate={false}
+                        {goals.length > 0 ? (
+                            goals.map((goal) => (
+                                <SavingsGoalCard
+                                    key={goal.id}
+                                    title={goal.title}
+                                    targetAmount={goal.targetAmount}
+                                    savedAmount={goal.savedAmount}
+                                    targetDate={goal.targetDate}
+                                    animate={false}
+                                />
+                            ))
+                        ) : (
+                            <EmptyState
+                                icon={PiggyBank}
+                                title="Start your first savings goal"
+                                description="Set a target amount and date, then build towards it one contribution at a time."
+                                actionLabel="New Savings Goal"
+                                onAction={() => setIsNewGoalOpen(true)}
+                                className="col-span-2"
                             />
-                        ))}
+                        )}
                     </div>
                 </section>
             </div>
