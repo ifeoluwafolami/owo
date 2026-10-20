@@ -130,6 +130,42 @@
       "date": "2026-09-25"
     }
   ],
+  "spending": {
+    "salary": 650000,
+    "extraIncome": 50000,
+    "budgetCategories": [
+      {
+        "id": "food-groceries",
+        "name": "Food & Groceries",
+        "budget": 150000,
+        "spent": 86000
+      },
+      {
+        "id": "transportation",
+        "name": "Transportation",
+        "budget": 75000,
+        "spent": 44500
+      },
+      {
+        "id": "utilities",
+        "name": "Utilities",
+        "budget": 80000,
+        "spent": 52000
+      },
+      {
+        "id": "lifestyle",
+        "name": "Lifestyle",
+        "budget": 120000,
+        "spent": 58000
+      },
+      {
+        "id": "miscellaneous",
+        "name": "Miscellaneous",
+        "budget": 75000,
+        "spent": 28000
+      }
+    ]
+  },
   "recentExpenses": [
     {
       "id": "market-groceries",

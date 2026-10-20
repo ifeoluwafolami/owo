@@ -77,9 +77,9 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                     type="button"
                                     aria-current={isActive ? "page" : undefined}
                                     onClick={() => navigate(path)}
-                                    className={`flex h-12 w-full items-center justify-center gap-0 rounded-xl font-ferrite font-medium uppercase tracking-widest transition-all duration-200 hover:bg-light-blue/80 hover:text-blue group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-3 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-3 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-3 ${isActive ? "group-hover/sidebar:bg-light-blue group-hover/sidebar:text-blue group-hover/sidebar:shadow-sm group-focus-within/sidebar:bg-light-blue group-focus-within/sidebar:text-blue group-focus-within/sidebar:shadow-sm group-data-[profile-open=true]/sidebar:bg-light-blue group-data-[profile-open=true]/sidebar:text-blue group-data-[profile-open=true]/sidebar:shadow-sm" : ""}`}
+                                    className={`group/tab flex h-12 w-full items-center justify-center gap-0 rounded-xl font-ferrite font-medium uppercase tracking-widest transition-all duration-200 group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-3 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-3 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-3 ${isActive ? "group-hover/sidebar:bg-light-blue group-hover/sidebar:text-blue group-hover/sidebar:shadow-sm group-focus-within/sidebar:bg-light-blue group-focus-within/sidebar:text-blue group-focus-within/sidebar:shadow-sm group-data-[profile-open=true]/sidebar:bg-light-blue group-data-[profile-open=true]/sidebar:text-blue group-data-[profile-open=true]/sidebar:shadow-sm" : "hover:bg-light-blue/10 hover:text-light-blue hover:ring-1 hover:ring-inset hover:ring-light-blue/20"}`}
                                 >
-                                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl transition-all duration-200 ${isActive ? "bg-light-blue text-blue shadow-sm group-hover/sidebar:bg-transparent group-hover/sidebar:shadow-none group-focus-within/sidebar:bg-transparent group-focus-within/sidebar:shadow-none group-data-[profile-open=true]/sidebar:bg-transparent group-data-[profile-open=true]/sidebar:shadow-none" : ""}`}>
+                                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl transition-all duration-200 ${isActive ? "bg-light-blue text-blue shadow-sm group-hover/sidebar:bg-transparent group-hover/sidebar:shadow-none group-focus-within/sidebar:bg-transparent group-focus-within/sidebar:shadow-none group-data-[profile-open=true]/sidebar:bg-transparent group-data-[profile-open=true]/sidebar:shadow-none" : "group-hover/tab:scale-105"}`}>
                                         <Icon className="size-6" aria-hidden="true" />
                                     </span>
                                     <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover/sidebar:max-w-40 group-hover/sidebar:opacity-100 group-focus-within/sidebar:max-w-40 group-focus-within/sidebar:opacity-100 group-data-[profile-open=true]/sidebar:max-w-40 group-data-[profile-open=true]/sidebar:opacity-100">
@@ -99,12 +99,13 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                             <button
                                 type="button"
                                 role="menuitem"
-                                onClick={() => setIsProfileMenuOpen(false)}
-                                className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest transition duration-200 hover:bg-light-blue hover:text-blue"
+                                onClick={handleLogout}
+                                className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest text-red-400 transition duration-200 hover:bg-red-800 hover:text-red-200"
                             >
-                                <UserRound className="size-6 shrink-0" />
-                                <span className="whitespace-nowrap">My Profile</span>
+                                <LogOut className="size-6 shrink-0" />
+                                <span className="whitespace-nowrap">Log Out</span>
                             </button>
+
                             <button
                                 type="button"
                                 role="menuitem"
@@ -114,15 +115,21 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                 <Settings className="size-6 shrink-0" />
                                 <span className="whitespace-nowrap">Settings</span>
                             </button>
+
                             <button
                                 type="button"
                                 role="menuitem"
-                                onClick={handleLogout}
-                                className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest text-red-400 transition duration-200 hover:bg-red-800 hover:text-red-200"
+                                onClick={() => {
+                                    setIsProfileMenuOpen(false)
+                                    navigate("/profile")
+                                }}
+                                className="flex h-11 w-full items-center justify-start gap-4 rounded-xl px-3 text-left font-ferrite font-medium uppercase tracking-widest transition duration-200 hover:bg-light-blue hover:text-blue"
                             >
-                                <LogOut className="size-6 shrink-0" />
-                                <span className="whitespace-nowrap">Log Out</span>
+                                <UserRound className="size-6 shrink-0" />
+                                <span className="whitespace-nowrap">My Profile</span>
                             </button>
+                            
+                            
                         </div>
 
                         <button
@@ -131,10 +138,10 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                             aria-haspopup="menu"
                             aria-expanded={isProfileMenuOpen}
                             onClick={() => setIsProfileMenuOpen((isOpen) => !isOpen)}
-                            className="flex h-12 w-full items-center justify-center gap-0 transition-all duration-200 group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-1 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-1 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-1"
+                            className="group/profile flex h-12 w-full items-center justify-center gap-0 rounded-xl transition-all duration-200 hover:bg-light-blue hover:text-blue group-hover/sidebar:justify-start group-hover/sidebar:gap-4 group-hover/sidebar:px-2 group-focus-within/sidebar:justify-start group-focus-within/sidebar:gap-4 group-focus-within/sidebar:px-2 group-data-[profile-open=true]/sidebar:justify-start group-data-[profile-open=true]/sidebar:gap-4 group-data-[profile-open=true]/sidebar:px-2"
                         >
-                            <span className="grid size-10 shrink-0 place-items-center rounded-full border-2 border-light-blue bg-blue transition hover:scale-105 hover:bg-light-blue hover:text-blue">
-                                <User className="size-5" />
+                            <span className="grid size-8 shrink-0 place-items-center rounded-full border border-light-blue bg-blue transition group-hover/profile:border-blue group-hover/profile:bg-transparent">
+                                <User className="size-4" />
                             </span>
                             <span className="max-w-0 overflow-hidden whitespace-nowrap font-space-grotesk opacity-0 transition-all duration-200 group-hover/sidebar:max-w-40 group-hover/sidebar:opacity-100 group-focus-within/sidebar:max-w-40 group-focus-within/sidebar:opacity-100 group-data-[profile-open=true]/sidebar:max-w-40 group-data-[profile-open=true]/sidebar:opacity-100">
                                 {appData.user.fullName}

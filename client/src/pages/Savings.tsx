@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 import { CalendarDays, History } from "lucide-react";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
 import SavingsGoalCard from "../components/SavingsGoalCard";
 import CalendarInput from "../components/CalendarInput";
+import MoneyInput from "../components/MoneyInput";
 import appData from "../data/appData.json";
 
 const currencyFormatter = new Intl.NumberFormat("en-NG", {
@@ -21,9 +22,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-NG", {
 });
 
 export default function Savings() {
-    const overallProgressRef = useRef<HTMLElement>(null);
     const [goals, setGoals] = useState(appData.savingsGoals);
-    const [isOverallProgressVisible, setIsOverallProgressVisible] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
     const [useDateRange, setUseDateRange] = useState(false);
@@ -52,31 +51,6 @@ export default function Savings() {
     }, [rangeEnd, rangeStart, useDateRange]);
 
     const rangeTotal = filteredHistory.reduce((total, entry) => total + entry.amount, 0);
-
-    useEffect(() => {
-        const progressSection = overallProgressRef.current;
-        if (!progressSection) return;
-
-        let animationFrame = 0;
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                window.cancelAnimationFrame(animationFrame);
-
-                if (entry.isIntersecting) {
-                    animationFrame = window.requestAnimationFrame(() => setIsOverallProgressVisible(true));
-                } else {
-                    setIsOverallProgressVisible(false);
-                }
-            },
-            { threshold: 0.35 },
-        );
-
-        observer.observe(progressSection);
-        return () => {
-            observer.disconnect();
-            window.cancelAnimationFrame(animationFrame);
-        };
-    }, []);
 
     const handleCreateGoal = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -121,7 +95,7 @@ export default function Savings() {
                     </div>
                 </div>
 
-                <section ref={overallProgressRef} className="rounded-2xl bg-blue/20 p-4" aria-label="Overall savings progress">
+                <section className="rounded-2xl bg-blue/20 p-4" aria-label="Overall savings progress">
                     <div className="rounded-2xl bg-light-blue p-6 text-blue shadow-lg">
                         <div className="mb-5 flex items-end justify-between gap-6">
                             <div>
@@ -146,8 +120,8 @@ export default function Savings() {
                             aria-valuenow={totalSaved}
                         >
                             <div
-                                className={`h-full rounded-full bg-blue ${isOverallProgressVisible ? "transition-[width] duration-[1600ms] ease-out" : "transition-none"}`}
-                                style={{ width: isOverallProgressVisible ? `${overallProgress}%` : "0%" }}
+                                className="h-full rounded-full bg-blue"
+                                style={{ width: `${overallProgress}%` }}
                             />
                         </div>
                     </div>
@@ -170,7 +144,7 @@ export default function Savings() {
                                 targetAmount={goal.targetAmount}
                                 savedAmount={goal.savedAmount}
                                 targetDate={goal.targetDate}
-                                className="transition duration-300 hover:scale-102"
+                                animate={false}
                             />
                         ))}
                     </div>
@@ -273,14 +247,11 @@ export default function Savings() {
                     </label>
                     <label className="flex flex-col gap-2 text-sm font-semibold">
                         Target amount
-                        <input
-                            type="number"
+                        <MoneyInput
                             value={newGoal.targetAmount}
-                            onChange={(event) => setNewGoal((goal) => ({ ...goal, targetAmount: event.target.value }))}
+                            onValueChange={(targetAmount) => setNewGoal((goal) => ({ ...goal, targetAmount }))}
                             placeholder="0"
-                            min="1"
                             required
-                            className="h-12 rounded-xl border border-blue/20 bg-white/50 px-4 outline-none transition placeholder:text-blue/35 focus:border-blue"
                         />
                     </label>
                     <div className="flex flex-col gap-2 text-sm font-semibold">

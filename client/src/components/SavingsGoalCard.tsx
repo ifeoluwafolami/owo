@@ -6,6 +6,7 @@ interface SavingsGoalCardProps {
     savedAmount: number;
     targetDate?: string;
     className?: string;
+    animate?: boolean;
 }
 
 const currencyFormatter = new Intl.NumberFormat("en-NG", {
@@ -20,12 +21,16 @@ export default function SavingsGoalCard({
     savedAmount,
     targetDate,
     className = "",
+    animate = true,
 }: SavingsGoalCardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(!animate);
     const progress = Math.min((savedAmount / targetAmount) * 100, 100);
+    const showProgress = !animate || isVisible;
 
     useEffect(() => {
+        if (!animate) return;
+
         const card = cardRef.current;
         if (!card) return;
 
@@ -49,7 +54,7 @@ export default function SavingsGoalCard({
             observer.disconnect();
             window.cancelAnimationFrame(animationFrame);
         };
-    }, []);
+    }, [animate]);
 
     return (
         <div
@@ -80,8 +85,8 @@ export default function SavingsGoalCard({
                 aria-valuenow={savedAmount}
             >
                 <div
-                    className={`h-full rounded-full bg-blue ${isVisible ? "transition-[width] duration-[1600ms] ease-out" : "transition-none"}`}
-                    style={{ width: isVisible ? `${progress}%` : "0%" }}
+                    className={`h-full rounded-full bg-blue ${animate && isVisible ? "transition-[width] duration-[1600ms] ease-out" : "transition-none"}`}
+                    style={{ width: showProgress ? `${progress}%` : "0%" }}
                 />
             </div>
 

@@ -5,7 +5,9 @@ import Auth from './pages/Auth'
 import ResetPassword from './pages/ResetPassword'
 import Savings from './pages/Savings'
 import Spending from './pages/Spending'
-import Overview from './pages/Dashboard'
+import Overview from './pages/Overview'
+import Profile from './pages/Profile'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -19,6 +21,9 @@ function App() {
         <Route path="/overview" element={<Overview />} />
         <Route path="/savings" element={<Savings />} />
         <Route path="/spending" element={<Spending />} />
+        <Route path="/profile" element={<Profile />} />
+
+        <Route path="/*" element={<NotFound />} />
 
       </Routes>
     </BrowserRouter>

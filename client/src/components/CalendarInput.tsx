@@ -167,7 +167,7 @@ export default function CalendarInput(props: CalendarInputProps) {
                 onClick={() => setIsOpen((open) => !open)}
                 aria-haspopup="dialog"
                 aria-expanded={isOpen}
-                className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left outline-none transition hover:border-blue/40 focus:border-blue focus:ring-2 focus:ring-blue/15 ${startDate ? "border-blue/15 bg-blue/10" : "border-blue/20 bg-white/25"}`}
+                className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-blue/20 bg-white/50 px-4 text-left outline-none transition hover:border-blue/40 focus:border-blue focus:ring-2 focus:ring-blue/15"
             >
                 <span className={startDate ? "font-medium text-blue" : "text-blue/40"}>{displayValue}</span>
                 <CalendarDays className="size-5 shrink-0 text-blue/60" />
