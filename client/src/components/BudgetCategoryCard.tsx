@@ -17,20 +17,17 @@ export default function BudgetCategoryCard({ name, spent, budget }: BudgetCatego
     const isOverBudget = spent > budget;
 
     return (
-        <article className="rounded-2xl bg-light-blue p-5 text-blue shadow-lg">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="font-ferrite text-sm font-medium uppercase tracking-wider">{name}</p>
-                    <p className="mt-3 text-2xl font-bold tracking-wider">{currencyFormatter.format(spent)}</p>
-                    <p className="mt-1 text-sm text-blue/60">spent of {currencyFormatter.format(budget)}</p>
-                </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${isOverBudget ? "bg-red-200 text-red-800" : "bg-blue text-light-blue"}`}>
-                    {percentage.toFixed(0)}%
+        <article className="w-full rounded-xl border border-blue/15 bg-light-blue px-4 py-3 text-blue shadow-lg">
+            <p className="text-xs uppercase opacity-50">Budget category</p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="font-semibold">{name}</span>
+                <span className={`text-xs font-semibold ${isOverBudget ? "text-red-700" : "text-blue/60"}`}>
+                    {currencyFormatter.format(spent)} / {currencyFormatter.format(budget)}
                 </span>
             </div>
 
             <div
-                className="mt-5 h-3 overflow-hidden rounded-full bg-blue/15"
+                className="mt-3 h-2 overflow-hidden rounded-full bg-blue/15"
                 role="progressbar"
                 aria-label={`${name} budget spent`}
                 aria-valuemin={0}
@@ -42,11 +39,10 @@ export default function BudgetCategoryCard({ name, spent, budget }: BudgetCatego
                     style={{ width: `${progressWidth}%` }}
                 />
             </div>
-
-            <p className={`mt-3 text-sm ${isOverBudget ? "font-semibold text-red-700" : "text-blue/60"}`}>
+            <p className={`mt-2 text-xs ${isOverBudget ? "font-semibold text-red-700" : "opacity-60"}`}>
                 {isOverBudget
                     ? `${currencyFormatter.format(spent - budget)} over budget`
-                    : `${currencyFormatter.format(remaining)} remaining`}
+                    : `${currencyFormatter.format(remaining)} left to spend`}
             </p>
         </article>
     );

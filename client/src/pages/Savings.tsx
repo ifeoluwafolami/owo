@@ -1,301 +1,68 @@
-import { useCallback, useMemo, useState, type FormEvent } from "react";
-import { CalendarDays, History, PiggyBank } from "lucide-react";
-import Layout from "../components/Layout";
+import { History, PiggyBank } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { api } from "../api";
 import Button from "../components/Button";
-import Modal from "../components/Modal";
-import SavingsGoalCard from "../components/SavingsGoalCard";
-import CalendarInput from "../components/CalendarInput";
-import MoneyInput from "../components/MoneyInput";
-import appData from "../data/appData.json";
-import { ALL_DATA_RESET_KEY, NEW_ACCOUNT_KEY, USER_SAVINGS_GOALS_KEY } from "../settingsStorage";
 import EmptyState from "../components/EmptyState";
-
-const emptySavingsHistory: typeof appData.savingsHistory = [];
-
-function loadStoredGoals(): typeof appData.savingsGoals | null {
-    const storedGoals = localStorage.getItem(USER_SAVINGS_GOALS_KEY);
-    if (!storedGoals) return null;
-
-    try {
-        return JSON.parse(storedGoals) as typeof appData.savingsGoals;
-    } catch {
-        return null;
-    }
-}
-
-const currencyFormatter = new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    maximumFractionDigits: 0,
-});
-
-const dateFormatter = new Intl.DateTimeFormat("en-NG", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-});
+import Layout from "../components/Layout";
+import Modal from "../components/Modal";
+import MoneyInput from "../components/MoneyInput";
+import SavingsGoalCard from "../components/SavingsGoalCard";
+import { currencyFormatter, localDateValue, type SavingsContribution, type SavingsGoal } from "../finance";
 
 export default function Savings() {
-    const isAllDataReset = localStorage.getItem(ALL_DATA_RESET_KEY) === "true";
-    const isNewAccount = localStorage.getItem(NEW_ACCOUNT_KEY) === "true";
-    const storedGoals = loadStoredGoals();
-    const savingsHistory = isAllDataReset || isNewAccount ? emptySavingsHistory : appData.savingsHistory;
-    const [goals, setGoals] = useState(isAllDataReset || isNewAccount ? storedGoals ?? [] : storedGoals ?? appData.savingsGoals);
-    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-    const [isNewGoalOpen, setIsNewGoalOpen] = useState(false);
-    const [useDateRange, setUseDateRange] = useState(false);
-    const [rangeStart, setRangeStart] = useState("2026-10-01");
-    const [rangeEnd, setRangeEnd] = useState("2026-10-19");
-    const [newGoal, setNewGoal] = useState({ title: "", targetAmount: "", targetDate: "" });
-    const closeHistory = useCallback(() => setIsHistoryOpen(false), []);
-    const closeNewGoal = useCallback(() => setIsNewGoalOpen(false), []);
+    const [goals, setGoals] = useState<SavingsGoal[]>([]);
+    const [history, setHistory] = useState<SavingsContribution[]>([]);
+    const [modal, setModal] = useState<"goal" | "contribution" | "history" | null>(null);
+    const [selectedGoal, setSelectedGoal] = useState("");
+    const [goalDraft, setGoalDraft] = useState({ title: "", targetAmount: "", targetDate: "" });
+    const [contributionDraft, setContributionDraft] = useState({ amount: "", contributedAt: localDateValue() });
+    const [error, setError] = useState("");
 
-    const totalSaved = goals.reduce((total, goal) => total + goal.savedAmount, 0);
-    const totalTarget = goals.reduce((total, goal) => total + goal.targetAmount, 0);
-    const overallProgress = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
-    const historyMonth = savingsHistory[0]?.date.slice(0, 7) ?? "";
-    const savedThisMonth = savingsHistory
-        .filter((entry) => entry.date.startsWith(historyMonth))
-        .reduce((total, entry) => total + entry.amount, 0);
+    useEffect(() => {
+        void Promise.all([
+            api<{ goals: SavingsGoal[] }>("/savings/goals"),
+            api<{ contributions: SavingsContribution[] }>("/savings/contributions?limit=100"),
+        ]).then(([goalResult, historyResult]) => {
+            setGoals(goalResult.goals);
+            setHistory(historyResult.contributions);
+            setSelectedGoal((current) => current || goalResult.goals[0]?._id || "");
+        }).catch((reason: Error) => setError(reason.message));
+    }, []);
 
-    const filteredHistory = useMemo(() => {
-        if (!useDateRange) return savingsHistory;
-
-        return savingsHistory.filter((entry) => {
-            const afterStart = !rangeStart || entry.date >= rangeStart;
-            const beforeEnd = !rangeEnd || entry.date <= rangeEnd;
-            return afterStart && beforeEnd;
-        });
-    }, [rangeEnd, rangeStart, savingsHistory, useDateRange]);
-
-    const rangeTotal = filteredHistory.reduce((total, entry) => total + entry.amount, 0);
-
-    const handleCreateGoal = (event: FormEvent<HTMLFormElement>) => {
+    const createGoal = async (event: FormEvent) => {
         event.preventDefault();
-
-        const targetAmount = Number(newGoal.targetAmount);
-        if (!newGoal.title.trim() || targetAmount <= 0 || !newGoal.targetDate) return;
-
-        setGoals((currentGoals) => [
-            ...currentGoals,
-            {
-                id: `goal-${Date.now()}`,
-                title: newGoal.title.trim(),
-                targetAmount,
-                savedAmount: 0,
-                targetDate: newGoal.targetDate,
-            },
-        ]);
-        setNewGoal({ title: "", targetAmount: "", targetDate: "" });
-        closeNewGoal();
+        try {
+            const result = await api<{ goal: SavingsGoal }>("/savings/goals", { method: "POST", body: JSON.stringify({ ...goalDraft, targetAmount: Number(goalDraft.targetAmount) }) });
+            setGoals((items) => [result.goal, ...items]);
+            setSelectedGoal(result.goal._id);
+            setGoalDraft({ title: "", targetAmount: "", targetDate: "" });
+            setModal(null);
+        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to create goal."); }
     };
 
-    return (
-        <Layout showHeader={true}>
-            <div className="relative z-100 min-h-screen overflow-hidden px-16 py-12">
-                <div className="mb-6 flex items-center justify-between">
-                    <div className="flex justify-between items-end w-full">
-                        <div className="flex flex-col gap-3">
-                            <p className="font-ferrite text-xs uppercase tracking-wide">SAVE, ON PURPOSE.</p>
-                            <h1 className="text-3xl tracking-wide">Savings</h1>
-                        </div>
+    const addContribution = async (event: FormEvent) => {
+        event.preventDefault();
+        try {
+            const result = await api<{ contribution: SavingsContribution; goal: SavingsGoal }>(`/savings/goals/${selectedGoal}/contributions`, { method: "POST", body: JSON.stringify({ ...contributionDraft, amount: Number(contributionDraft.amount) }) });
+            setHistory((items) => [result.contribution, ...items]);
+            setGoals((items) => items.map((goal) => goal._id === result.goal._id ? result.goal : goal));
+            setContributionDraft({ amount: "", contributedAt: localDateValue() });
+            setModal(null);
+        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to add contribution."); }
+    };
 
-                        <button
-                            type="button"
-                            onClick={() => setIsHistoryOpen(true)}
-                            aria-label="View savings history"
-                            title="Savings history"
-                            className="inline-flex h-10 items-center gap-2 rounded-xl bg-light-blue px-4 font-space-grotesk text-sm font-semibold uppercase tracking-wide text-blue shadow-md transition duration-200 hover:scale-105 hover:bg-light-blue/80"
-                        >
-                            <History className="size-5" />
-                            <span>View History</span>
-                        </button>
-                    </div>
-                </div>
+    const totalSaved = goals.reduce((sum, goal) => sum + goal.savedAmount, 0);
+    const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+    const progress = totalTarget ? Math.min(100, totalSaved / totalTarget * 100) : 0;
 
-                <section className="rounded-2xl bg-blue/20 p-4" aria-label="Overall savings progress">
-                    <div className="rounded-2xl bg-light-blue p-6 text-blue shadow-lg">
-                        <div className="mb-5 flex items-end justify-between gap-6">
-                            <div>
-                                <p className="font-ferrite text-sm uppercase tracking-wider">Overall savings</p>
-                                <p className="mt-2 text-3xl font-bold tracking-wider">
-                                    {currencyFormatter.format(totalSaved)}
-                                </p>
-                                <p className="mt-1 text-sm text-blue/60">
-                                    saved out of {currencyFormatter.format(totalTarget)}
-                                </p>
-                            </div>
-                            <span className="rounded-full bg-blue px-3 py-1 text-sm font-semibold text-light-blue">
-                                {overallProgress.toFixed(0)}%
-                            </span>
-                        </div>
-                        <div
-                            className="h-4 overflow-hidden rounded-full bg-blue/15"
-                            role="progressbar"
-                            aria-label="Total savings progress"
-                            aria-valuemin={0}
-                            aria-valuemax={totalTarget}
-                            aria-valuenow={totalSaved}
-                        >
-                            <div
-                                className="h-full rounded-full bg-blue"
-                                style={{ width: `${overallProgress}%` }}
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                <section className="mt-12 flex flex-col gap-6">
-                    <div className="flex w-full items-center justify-between">
-                        <div className="flex flex-col gap-2">
-                            <p className="font-ferrite text-xs uppercase tracking-wide">Money on a mission.</p>
-                            <h2 className="text-3xl tracking-wide">Your Savings Targets</h2>
-                        </div>
-                        <Button label="New Savings Goal" onClick={() => setIsNewGoalOpen(true)} />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6 rounded-2xl bg-blue/20 p-4">
-                        {goals.length > 0 ? (
-                            goals.map((goal) => (
-                                <SavingsGoalCard
-                                    key={goal.id}
-                                    title={goal.title}
-                                    targetAmount={goal.targetAmount}
-                                    savedAmount={goal.savedAmount}
-                                    targetDate={goal.targetDate}
-                                    animate={false}
-                                />
-                            ))
-                        ) : (
-                            <EmptyState
-                                icon={PiggyBank}
-                                title="Start your first savings goal"
-                                description="Set a target amount and date, then build towards it one contribution at a time."
-                                actionLabel="New Savings Goal"
-                                onAction={() => setIsNewGoalOpen(true)}
-                                className="col-span-2"
-                            />
-                        )}
-                    </div>
-                </section>
-            </div>
-
-            <Modal
-                isOpen={isHistoryOpen}
-                onClose={closeHistory}
-                title="Savings History"
-                size="large"
-            >
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-blue p-5 text-light-blue flex flex-col justify-center">
-                        <p className="text-xs uppercase tracking-widest">Saved this month</p>
-                        <p className="mt-2 text-2xl font-bold tracking-wider">{currencyFormatter.format(savedThisMonth)}</p>
-                    </div>
-                    <div className="rounded-2xl bg-blue/10 p-5">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs uppercase tracking-widest text-blue/60">Saved vs target</p>
-                            <span className="font-semibold">{overallProgress.toFixed(0)}%</span>
-                        </div>
-                        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-blue/15">
-                            <div className="h-full rounded-full bg-blue" style={{ width: `${overallProgress}%` }} />
-                        </div>
-                        <p className="mt-2 text-sm text-blue/60">
-                            {currencyFormatter.format(totalSaved)} of {currencyFormatter.format(totalTarget)}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="my-6 flex rounded-xl bg-blue/10 p-1">
-                    <button
-                        type="button"
-                        onClick={() => setUseDateRange(false)}
-                        className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${!useDateRange ? "bg-blue text-light-blue" : "text-blue/60"}`}
-                    >
-                        All time
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setUseDateRange(true)}
-                        className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wide transition ${useDateRange ? "bg-blue text-light-blue" : "text-blue/60"}`}
-                    >
-                        <CalendarDays className="size-4" />
-                        Date range
-                    </button>
-                </div>
-
-                {useDateRange && (
-                    <CalendarInput
-                        mode="range"
-                        startDate={rangeStart}
-                        endDate={rangeEnd}
-                        onChange={(startDate, endDate) => {
-                            setRangeStart(startDate);
-                            setRangeEnd(endDate);
-                        }}
-                    />
-                )}
-
-                <div className="mt-6 flex items-center justify-between">
-                    <h3 className="font-ferrite uppercase tracking-wide">Savings added</h3>
-                    <p className="font-semibold bg-blue text-light-blue p-2 tracking-wider uppercase">Total: {currencyFormatter.format(rangeTotal)}</p>
-                </div>
-
-                <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {filteredHistory.length > 0 ? (
-                        filteredHistory.map((entry) => (
-                            <div key={entry.id} className="flex items-center justify-between gap-4 rounded-xl bg-blue/10 px-4 py-3">
-                                <div>
-                                    <p className="font-semibold">{entry.goalTitle}</p>
-                                    <p className="mt-1 text-sm text-blue/60">{dateFormatter.format(new Date(entry.date))}</p>
-                                </div>
-                                <p className="font-bold tracking-wider">+{currencyFormatter.format(entry.amount)}</p>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="rounded-xl bg-blue/10 p-5 text-center text-blue/60">No savings were added in this range.</p>
-                    )}
-                </div>
-            </Modal>
-
-            <Modal
-                isOpen={isNewGoalOpen}
-                onClose={closeNewGoal}
-                title="Create Savings Goal"
-            >
-                <form onSubmit={handleCreateGoal} className="space-y-5">
-                    <label className="flex flex-col gap-2 text-sm font-semibold">
-                        Title
-                        <input
-                            type="text"
-                            value={newGoal.title}
-                            onChange={(event) => setNewGoal((goal) => ({ ...goal, title: event.target.value }))}
-                            placeholder="e.g. New laptop"
-                            required
-                            className="h-12 rounded-xl border border-blue/20 bg-white/50 px-4 outline-none transition placeholder:text-blue/35 focus:border-blue"
-                        />
-                    </label>
-                    <label className="flex flex-col gap-2 text-sm font-semibold">
-                        Target amount
-                        <MoneyInput
-                            value={newGoal.targetAmount}
-                            onValueChange={(targetAmount) => setNewGoal((goal) => ({ ...goal, targetAmount }))}
-                            placeholder="0"
-                            required
-                        />
-                    </label>
-                    <div className="flex flex-col gap-2 text-sm font-semibold">
-                        <span>Target date</span>
-                        <CalendarInput
-                            mode="single"
-                            value={newGoal.targetDate}
-                            onChange={(targetDate) => setNewGoal((goal) => ({ ...goal, targetDate }))}
-                            placeholder="Select target date"
-                        />
-                    </div>
-                    <Button type="submit" label="Create Goal" className="w-full" variant="dark" />
-                </form>
-            </Modal>
-        </Layout>
-    );
+    return <Layout showHeader><main className="min-h-screen px-6 py-12 sm:px-10 lg:px-16">
+        <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-ferrite text-xs uppercase">Save, on purpose.</p><h1 className="mt-2 text-3xl">Savings</h1></div><div className="flex gap-3"><Button label="Add Savings" onClick={() => setModal("contribution")} disabled={!goals.length} /><Button label="New Goal" onClick={() => setModal("goal")} /></div></div>
+        {error && <p role="alert" className="mt-5 rounded-xl bg-red-100 p-4 text-red-800">{error}</p>}
+        <section className="mt-6 rounded-2xl bg-light-blue p-6 text-blue"><div className="flex items-end justify-between"><div><p className="font-ferrite uppercase">Overall savings</p><p className="mt-2 text-3xl font-bold">{currencyFormatter.format(totalSaved)}</p><p className="text-sm text-blue/60">of {currencyFormatter.format(totalTarget)}</p></div><span className="rounded-full bg-blue px-3 py-1 text-light-blue">{progress.toFixed(0)}%</span></div><div className="mt-5 h-4 overflow-hidden rounded-full bg-blue/15"><div className="h-full rounded-full bg-blue" style={{ width: `${progress}%` }} /></div></section>
+        <section className="mt-10"><div className="mb-4 flex items-center justify-between gap-4"><h2 className="text-2xl">Your Savings Targets</h2><Button label="History" onClick={() => setModal("history")} /></div><div className="grid gap-6 md:grid-cols-2">{goals.map((goal) => <SavingsGoalCard key={goal._id} title={goal.title} targetAmount={goal.targetAmount} savedAmount={goal.savedAmount} targetDate={goal.targetDate} animate={false} />)}{!goals.length && <EmptyState icon={PiggyBank} title="Start your first savings goal" description="Set a target and build toward it." actionLabel="New Goal" onAction={() => setModal("goal")} className="md:col-span-2" />}</div></section>
+    </main>
+    <Modal isOpen={modal === "goal"} onClose={() => setModal(null)} title="Create Savings Goal"><form onSubmit={createGoal} className="space-y-4"><input className="h-12 w-full rounded-xl border px-4" placeholder="Goal title" value={goalDraft.title} onChange={(e) => setGoalDraft({ ...goalDraft, title: e.target.value })} required /><MoneyInput value={goalDraft.targetAmount} onValueChange={(targetAmount) => setGoalDraft({ ...goalDraft, targetAmount })} placeholder="Target amount" required /><input type="date" className="h-12 w-full rounded-xl border px-4" value={goalDraft.targetDate} onChange={(e) => setGoalDraft({ ...goalDraft, targetDate: e.target.value })} required /><Button type="submit" label="Create Goal" variant="dark" className="w-full" /></form></Modal>
+    <Modal isOpen={modal === "contribution"} onClose={() => setModal(null)} title="Add Savings"><form onSubmit={addContribution} className="space-y-4"><select className="h-12 w-full rounded-xl border px-4" value={selectedGoal} onChange={(e) => setSelectedGoal(e.target.value)} required>{goals.map((goal) => <option key={goal._id} value={goal._id}>{goal.title}</option>)}</select><MoneyInput value={contributionDraft.amount} onValueChange={(amount) => setContributionDraft({ ...contributionDraft, amount })} placeholder="Amount" required /><input type="date" className="h-12 w-full rounded-xl border px-4" value={contributionDraft.contributedAt} onChange={(e) => setContributionDraft({ ...contributionDraft, contributedAt: e.target.value })} required /><Button type="submit" label="Add Contribution" variant="dark" className="w-full" /></form></Modal>
+    <Modal isOpen={modal === "history"} onClose={() => setModal(null)} title="Savings History" size="large"><div className="max-h-96 space-y-2 overflow-y-auto">{history.map((entry) => <div key={entry._id} className="flex items-center justify-between rounded-xl bg-blue/10 p-4"><div><p className="font-semibold">{entry.goal.title}</p><p className="text-sm text-blue/60">{new Date(entry.contributedAt).toLocaleDateString("en-NG", { dateStyle: "medium" })}</p></div><p className="font-bold">+{currencyFormatter.format(entry.amount)}</p></div>)}{!history.length && <EmptyState icon={History} title="No savings history" description="Contributions will appear here." />}</div></Modal>
+    </Layout>;
 }
