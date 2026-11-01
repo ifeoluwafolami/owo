@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { fileURLToPath } from "node:url";
 import { config } from "./config/config.js";
 
 import { healthRouter } from "./routes/health.routes.js";
@@ -55,10 +56,29 @@ app.use("/api/income", incomeRouter);
 app.use("/api/savings", savingsRouter);
 app.use("/api/overview", overviewRouter);
 
-// 7. Handle unknown routes.
+// 7. In production, serve the React application from this same origin.
+if (config.nodeEnv === "production") {
+    const clientDistPath = fileURLToPath(new URL("../../client/dist", import.meta.url));
+
+    app.use(express.static(clientDistPath, { index: false }));
+    app.use((req, res, next) => {
+        if (
+            req.method === "GET" &&
+            !req.path.startsWith("/api") &&
+            req.accepts("html")
+        ) {
+            res.sendFile("index.html", { root: clientDistPath });
+            return;
+        }
+
+        next();
+    });
+}
+
+// 8. Handle unknown routes.
 app.use(notFoundHandler);
 
-// 8. Handle errors from middleware and routes.
+// 9. Handle errors from middleware and routes.
 app.use(errorHandler);
 
 export default app;
