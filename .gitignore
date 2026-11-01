@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+*.tsbuildinfo
+*.md
+
+# Local HTTP/session debugging artifacts can contain live credentials.
+cookies.txt
+*-cookies.txt
+server/device*.txt
+server/*-cookies.txt
