@@ -4,13 +4,13 @@ import SavingsGoalCard from "../components/SavingsGoalCard";
 import ExpenseCard from "../components/ExpenseCard";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import appData from "../data/appData.json";
+
+const featuredSavingsGoal = { title: "Emergency Fund", targetAmount: 500000, savedAmount: 185000, targetDate: "2027-06-01" };
+const featuredExpense = { expenseName: "Market groceries", amount: 18500, category: "Food & Groceries", categoryBudget: 150000 };
 
 export default function Homepage() {
     const [stopBounce, setStopBounce] = useState(false);
     const [expensesReplay, setExpensesReplay] = useState(0);
-    const featuredSavingsGoal = appData.savingsGoals[0];
-    const featuredExpense = appData.recentExpenses[0];
     useEffect(() => {
         if (!stopBounce) return;
 
