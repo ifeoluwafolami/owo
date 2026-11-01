@@ -13,6 +13,11 @@ interface ModalProps {
 export default function Modal({ isOpen, onClose, title, children, size = "default", mobileFullScreen = false }: ModalProps) {
     const titleId = useId();
     const dialogRef = useRef<HTMLDivElement>(null);
+    const onCloseRef = useRef(onClose);
+
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -28,7 +33,7 @@ export default function Modal({ isOpen, onClose, title, children, size = "defaul
         });
 
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") onClose();
+            if (event.key === "Escape") onCloseRef.current();
         };
 
         document.addEventListener("keydown", handleKeyDown);
@@ -39,7 +44,7 @@ export default function Modal({ isOpen, onClose, title, children, size = "defaul
             document.body.style.overflow = previousOverflow;
             previousActiveElement?.focus();
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
