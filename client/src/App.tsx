@@ -9,6 +9,8 @@ import Overview from './pages/Overview'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Settings from './pages/Settings'
+import VerifyEmail from './pages/VerifyEmail'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -16,14 +18,17 @@ function App() {
       <Routes>
 
         <Route path="/" element={<Homepage />} />
-        <Route path="/login" element={<Auth initialMode="login" />} />
-        <Route path="/signup" element={<Auth initialMode="signup" />} />
+        <Route path="/login" element={<Auth key="login" initialMode="login" />} />
+        <Route path="/signup" element={<Auth key="signup" initialMode="signup" />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/savings" element={<Savings />} />
-        <Route path="/spending" element={<Spending />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/overview" element={<Overview />} />
+          <Route path="/savings" element={<Savings />} />
+          <Route path="/spending" element={<Spending />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
 
         <Route path="/*" element={<NotFound />} />
 

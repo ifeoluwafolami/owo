@@ -5,16 +5,8 @@ import Button from "./Button";
 import CalendarInput from "./CalendarInput";
 import MoneyInput from "./MoneyInput";
 import { applyTheme, DEFAULT_THEME, themes, type ThemeId } from "../theme";
-import {
-    ALL_DATA_RESET_KEY,
-    EXPENSE_HISTORY_CLEARED_KEY,
-    NEW_ACCOUNT_KEY,
-    PREFERENCES_STORAGE_KEY,
-    USER_BIRTHDAY_KEY,
-    USER_BUDGET_CATEGORIES_KEY,
-    USER_MONTHLY_INCOME_KEY,
-    USER_SAVINGS_GOALS_KEY,
-} from "../settingsStorage";
+import { api } from "../api";
+import { useAuth } from "../auth";
 
 interface OnboardingProps {
     isOpen: boolean;
@@ -37,6 +29,7 @@ interface SavingsDraft {
 const inputClasses = "h-12 w-full rounded-xl border border-blue/20 bg-white/50 px-4 text-blue outline-none placeholder:text-blue/40 focus:border-blue focus:ring-2 focus:ring-blue/15";
 
 export default function Onboarding({ isOpen, onComplete }: OnboardingProps) {
+    const { reloadUser } = useAuth();
     const [step, setStep] = useState(1);
     const [birthday, setBirthday] = useState("");
     const [monthlyIncome, setMonthlyIncome] = useState("");
@@ -49,51 +42,44 @@ export default function Onboarding({ isOpen, onComplete }: OnboardingProps) {
     const [inAppNotifications, setInAppNotifications] = useState(true);
 
     const finishWithoutSaving = () => {
-        localStorage.removeItem(ALL_DATA_RESET_KEY);
-        localStorage.setItem(EXPENSE_HISTORY_CLEARED_KEY, "true");
-        localStorage.setItem(NEW_ACCOUNT_KEY, "true");
-        localStorage.removeItem(USER_BIRTHDAY_KEY);
-        localStorage.removeItem(USER_MONTHLY_INCOME_KEY);
-        localStorage.setItem(USER_BUDGET_CATEGORIES_KEY, "[]");
-        localStorage.setItem(USER_SAVINGS_GOALS_KEY, "[]");
-        onComplete();
+        void api("/users/me/onboarding", {
+            method: "POST",
+            body: JSON.stringify({ preferences: {} }),
+        }).then(reloadUser).then(onComplete);
     };
 
-    const finishOnboarding = (event: FormEvent<HTMLFormElement>) => {
+    const finishOnboarding = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-
-        if (birthday) {
-            localStorage.setItem(USER_BIRTHDAY_KEY, birthday);
-        } else {
-            localStorage.removeItem(USER_BIRTHDAY_KEY);
-        }
-        if (Number(monthlyIncome) > 0) {
-            localStorage.setItem(USER_MONTHLY_INCOME_KEY, monthlyIncome);
-        } else {
-            localStorage.removeItem(USER_MONTHLY_INCOME_KEY);
-        }
-        localStorage.setItem(
-            USER_BUDGET_CATEGORIES_KEY,
-            JSON.stringify(budgetCategories
-                .filter((category) => category.name.trim() && Number(category.budget) > 0)
-                .map((category) => ({ ...category, name: category.name.trim(), budget: Number(category.budget), spent: 0 }))),
-        );
-        localStorage.setItem(
-            USER_SAVINGS_GOALS_KEY,
-            JSON.stringify(savingsGoals
+        await api("/users/me/onboarding", {
+            method: "POST",
+            body: JSON.stringify({
+                ...(birthday ? { birthday } : {}),
+                ...(Number(monthlyIncome) > 0 ? { monthlyIncome: Number(monthlyIncome) } : {}),
+                preferences: {
+                    currency,
+                    overspendingThreshold: Number(threshold || 90),
+                    emailNotifications,
+                    inAppNotifications,
+                    theme,
+                },
+            }),
+        });
+        await Promise.all([
+            ...budgetCategories
+                .filter((category) => category.name.trim() && Number(category.budget) >= 0)
+                .map((category) => api("/budgets", {
+                    method: "POST",
+                    body: JSON.stringify({ name: category.name.trim(), monthlyLimit: Number(category.budget) }),
+                })),
+            ...savingsGoals
                 .filter((goal) => goal.title.trim() && Number(goal.targetAmount) > 0 && goal.targetDate)
-                .map((goal) => ({ ...goal, title: goal.title.trim(), targetAmount: Number(goal.targetAmount), savedAmount: 0 }))),
-        );
-        localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({
-            currency,
-            overspendingThreshold: threshold || "90",
-            emailNotifications,
-            inAppNotifications,
-        }));
-        localStorage.removeItem(ALL_DATA_RESET_KEY);
-        localStorage.setItem(EXPENSE_HISTORY_CLEARED_KEY, "true");
-        localStorage.setItem(NEW_ACCOUNT_KEY, "true");
+                .map((goal) => api("/savings/goals", {
+                    method: "POST",
+                    body: JSON.stringify({ title: goal.title.trim(), targetAmount: Number(goal.targetAmount), targetDate: goal.targetDate }),
+                })),
+        ]);
         applyTheme(theme);
+        await reloadUser();
         onComplete();
     };
 

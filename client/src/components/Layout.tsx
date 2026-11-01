@@ -1,7 +1,7 @@
 import { LayoutDashboard, LogOut, PiggyBank, ReceiptText, Settings, User, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import appData from "../data/appData.json";
+import { useAuth } from "../auth";
 
 interface LayoutProps {
     children: ReactNode;
@@ -16,6 +16,7 @@ const navigationItems = [
 
 export default function Layout ({ children, showHeader = false }: LayoutProps) {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
     const { pathname } = useLocation();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -44,8 +45,9 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
         };
     }, [isProfileMenuOpen]);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setIsProfileMenuOpen(false);
+        await logout();
         navigate("/login");
     };
 
@@ -147,7 +149,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
                                 <User className="size-4" />
                             </span>
                             <span className="max-w-0 overflow-hidden whitespace-nowrap font-space-grotesk opacity-0 transition-all duration-200 group-hover/sidebar:max-w-40 group-hover/sidebar:opacity-100 group-focus-within/sidebar:max-w-40 group-focus-within/sidebar:opacity-100 group-data-[profile-open=true]/sidebar:max-w-40 group-data-[profile-open=true]/sidebar:opacity-100">
-                                {appData.user.fullName}
+                                {user ? `${user.firstName} ${user.lastName}` : "Profile"}
                             </span>
                         </button>
                     </div>

@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import Onboarding from "../components/Onboarding";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from "../auth";
 
 type AuthMode = "login" | "signup";
 
@@ -38,6 +39,7 @@ function AppleIcon() {
 
 export default function Auth({ initialMode = "login" }: AuthProps) {
     const navigate = useNavigate();
+    const { login, signup } = useAuth();
     const [mode, setMode] = useState<AuthMode>(initialMode);
     const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
     const [resetEmail, setResetEmail] = useState("");
@@ -45,14 +47,48 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
     const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [status, setStatus] = useState("");
+    const [submitting, setSubmitting] = useState(false);
     const isSignup = mode === "signup";
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const selectMode = (nextMode: AuthMode) => {
+        setMode(nextMode);
+        setStatus("");
+        navigate(nextMode === "login" ? "/login" : "/signup", { replace: true });
+    };
+
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (isSignup) {
-            setIsOnboardingOpen(true);
-        } else {
-            navigate("/overview");
+        setStatus("");
+        const data = new FormData(event.currentTarget);
+        const email = String(data.get("email") ?? "");
+        const password = String(data.get("password") ?? "");
+        const confirmPassword = String(data.get("confirmPassword") ?? "");
+        if (isSignup && password !== confirmPassword) {
+            setStatus("The passwords do not match.");
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            if (isSignup) {
+                const message = await signup({
+                    firstName: String(data.get("firstName") ?? ""),
+                    lastName: String(data.get("lastName") ?? ""),
+                    email,
+                    password,
+                });
+                setStatus(message);
+                event.currentTarget.reset();
+            } else {
+                const user = await login(email, password);
+                if (user.onboardingCompleted) navigate("/overview");
+                else setIsOnboardingOpen(true);
+            }
+        } catch (error) {
+            setStatus(error instanceof Error ? error.message : "Unable to authenticate.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -105,7 +141,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                     <button
                                         type="button"
                                         aria-pressed={mode === "login"}
-                                        onClick={() => setMode("login")}
+                                        onClick={() => selectMode("login")}
                                         className={`h-11 rounded-xl font-ferrite uppercase transition-all duration-300 ${mode === "login" ? "bg-blue text-light-blue shadow-md" : "text-blue/60 hover:bg-blue/50 hover:text-light-blue"}`}
                                     >
                                         Login
@@ -113,7 +149,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                     <button
                                         type="button"
                                         aria-pressed={mode === "signup"}
-                                        onClick={() => setMode("signup")}
+                                        onClick={() => selectMode("signup")}
                                         className={`h-11 rounded-xl font-ferrite uppercase transition-all duration-300 ${mode === "signup" ? "bg-blue text-light-blue shadow-md" : "text-blue/60 hover:bg-blue/50 hover:text-light-blue"}`}
                                     >
                                         Sign up
@@ -134,6 +170,8 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                 <div className="grid grid-cols-2 gap-3">
                                     <button
                                         type="button"
+                                        disabled
+                                        title="Google sign-in is not available yet"
                                         className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-blue/20 bg-white/45 font-semibold leading-none transition hover:bg-white/70"
                                     >
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center"><GoogleIcon /></span>
@@ -141,6 +179,8 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                     </button>
                                     <button
                                         type="button"
+                                        disabled
+                                        title="Apple sign-in is not available yet"
                                         className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-blue/20 bg-white/45 font-semibold leading-none transition hover:bg-white/70"
                                     >
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center"><AppleIcon /></span>
@@ -222,11 +262,14 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                         </label>
                                     )}
 
+                                    {status && <p role="status" className={`rounded-xl p-3 text-sm ${status.toLowerCase().includes("created") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{status}</p>}
+
                                     <Button
                                         type="submit"
-                                        label={isSignup ? "Create account" : "Login"}
+                                        label={submitting ? "Please wait…" : isSignup ? "Create account" : "Login"}
                                         variant="dark"
                                         className="mt-2 w-full"
+                                        disabled={submitting}
                                     />
                                 </form>
                             </div>
@@ -245,7 +288,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                 {isResetLinkSent ? (
                     <div>
                         <p className="leading-relaxed text-blue/70">
-                            If an account exists for <strong className="text-blue">{resetEmail}</strong>, we’ll send it a link to reset the password.
+                            Password recovery is not enabled on this v1 server yet. Contact support if you are locked out of <strong className="text-blue">{resetEmail}</strong>.
                         </p>
                         <Button label="Done" variant="dark" className="mt-6 w-full" onClick={closeForgotPassword} />
                     </div>
