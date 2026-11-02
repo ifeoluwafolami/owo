@@ -1,4 +1,4 @@
-import { CircleDollarSign, History, Pencil, Plus, ReceiptText, Trash2, WalletCards } from "lucide-react";
+import { CircleDollarSign, History, Plus, ReceiptText, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
@@ -6,16 +6,19 @@ import Button from "../components/Button";
 import BudgetCategoryCard from "../components/BudgetCategoryCard";
 import CalendarInput from "../components/CalendarInput";
 import EmptyState from "../components/EmptyState";
+import ExpenseHistoryRow from "../components/ExpenseHistoryRow";
 import Layout from "../components/Layout";
 import LoadingState from "../components/LoadingState";
 import Modal from "../components/Modal";
 import MoneyInput from "../components/MoneyInput";
 import OverviewCard from "../components/OverviewCard";
+import Pagination from "../components/Pagination";
 import PrivateAmount from "../components/PrivateAmount";
 import { useToast } from "../components/Toast";
 import { useAuth, type CurrentUser } from "../auth";
 import type { BudgetCategory, Expense } from "../finance";
 import { currencyFormatter, localDateValue } from "../finance";
+import { useResponsivePageSize } from "../hooks/useResponsivePageSize";
 
 interface Income { _id: string; source: string; amount: number; receivedAt: string }
 
@@ -35,6 +38,10 @@ export default function Spending() {
     const [selectedCategory, setSelectedCategory] = useState<BudgetCategory | null>(null);
     const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
     const [monthlyIncomeDraft, setMonthlyIncomeDraft] = useState(String(user?.monthlyIncome ?? ""));
+    const [categoryPage, setCategoryPage] = useState(1);
+    const [expenseHistoryPage, setExpenseHistoryPage] = useState(1);
+    const categoryPageSize = useResponsivePageSize(3, 6);
+    const expenseHistoryPageSize = useResponsivePageSize(5, 8);
 
     useEffect(() => {
         void Promise.all([
@@ -55,6 +62,13 @@ export default function Spending() {
         const totalIncome = income.reduce((sum, item) => sum + item.amount, 0);
         return { totalBudget, totalSpent, totalIncome, remaining: Math.max(0, totalBudget - totalSpent) };
     }, [categories, expenses, income]);
+
+    const categoryPageCount = Math.max(1, Math.ceil(categories.length / categoryPageSize));
+    const visibleCategoryPage = Math.min(categoryPage, categoryPageCount);
+    const paginatedCategories = categories.slice((visibleCategoryPage - 1) * categoryPageSize, visibleCategoryPage * categoryPageSize);
+    const expenseHistoryPageCount = Math.max(1, Math.ceil(expenses.length / expenseHistoryPageSize));
+    const visibleExpenseHistoryPage = Math.min(expenseHistoryPage, expenseHistoryPageCount);
+    const paginatedExpenseHistory = expenses.slice((visibleExpenseHistoryPage - 1) * expenseHistoryPageSize, visibleExpenseHistoryPage * expenseHistoryPageSize);
 
     const submitExpense = async (event: FormEvent) => {
         event.preventDefault();
@@ -206,37 +220,19 @@ export default function Spending() {
             <OverviewCard title="Total spent" amount={totals.totalSpent} icon={ReceiptText} supportingText="All recorded expenses" />
             <OverviewCard title="Budget remaining" amount={totals.remaining} icon={WalletCards} supportingText="Available to spend" />
         </div>
-        <section className="mt-8 sm:mt-10"><div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="text-xl sm:text-2xl">Budget categories</h2><Button label="Add Category" className="w-full sm:w-auto" onClick={() => setModal("category")} /></div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{categories.map((category) => {
+        <section className="mt-8 sm:mt-10"><div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="text-xl sm:text-2xl">Budget categories</h2><Button label="Add Category" className="w-full sm:w-auto" onClick={() => setModal("category")} /></div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{paginatedCategories.map((category) => {
             const spent = expenses.filter((expense) => expense.category._id === category._id).reduce((sum, expense) => sum + expense.amount, 0);
             return <BudgetCategoryCard key={category._id} name={category.name} spent={spent} budget={category.monthlyLimit} onEdit={() => openEditCategory(category)} onDelete={() => openDeleteCategory(category)} />;
-        })}{!categories.length && <EmptyState icon={Plus} title="No budget categories" description="Create a category before recording an expense." actionLabel="Add Category" onAction={() => setModal("category")} className="md:col-span-2" />}</div></section>
+        })}{!categories.length && <EmptyState icon={Plus} title="No budget categories" description="Create a category before recording an expense." actionLabel="Add Category" onAction={() => setModal("category")} className="md:col-span-2" />}</div><Pagination page={visibleCategoryPage} totalItems={categories.length} pageSize={categoryPageSize} onPageChange={setCategoryPage} className="mt-4" /></section>
         <section className="mt-8 sm:mt-10">
             <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-xl sm:text-2xl">Expense history</h2>
-                <Button label="View More" className="w-full sm:w-auto" onClick={() => setModal("history")} disabled={!expenses.length} />
+                <Button label="View More" className="w-full sm:w-auto" onClick={() => { setExpenseHistoryPage(1); setModal("history"); }} disabled={!expenses.length} />
             </div>
-            <div className="overflow-hidden rounded-2xl bg-light-blue text-blue shadow-lg">
+            <div className="relative rounded-2xl bg-light-blue text-blue shadow-lg">
                 {expenses.length > 0 && <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(7rem,0.7fr)_minmax(8rem,0.8fr)_4.5rem] gap-4 border-b border-blue/10 px-5 py-3 text-xs font-semibold uppercase tracking-widest text-blue/45 sm:grid"><span>Expense</span><span>Note</span><span>Category</span><span className="text-right">Amount</span><span className="text-center">Actions</span></div>}
                 {expenses.length ? expenses.slice(0, 5).map((expense) => (
-                    <div key={expense._id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-blue/10 px-4 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(7rem,0.7fr)_minmax(8rem,0.8fr)_4.5rem] sm:gap-4 sm:px-5">
-                        <div className="min-w-0">
-                            <p className="truncate font-semibold">{expense.name}</p>
-                            <p className="mt-1 text-xs text-blue/55">{new Date(expense.occurredAt).toLocaleDateString("en-NG", { dateStyle: "medium" })}</p>
-                        </div>
-                        <p className="hidden min-w-0 line-clamp-2 text-sm leading-relaxed text-blue/65 sm:block">{expense.note || "—"}</p>
-                        <p className="hidden text-sm text-blue/65 sm:block">{expense.category.name}</p>
-                        <PrivateAmount value={currencyFormatter.format(expense.amount)} className="hidden justify-self-end whitespace-nowrap text-sm font-bold tracking-wide sm:inline-flex sm:text-base" />
-                        <div className="hidden items-center justify-end gap-1.5 sm:flex">
-                            <button type="button" onClick={() => openEditExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-blue/15 transition hover:bg-blue hover:text-light-blue" aria-label={`Edit ${expense.name}`}><Pencil className="size-4" /></button>
-                            <button type="button" onClick={() => openDeleteExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-red-200 text-red-700 transition hover:bg-red-100" aria-label={`Delete ${expense.name}`}><Trash2 className="size-4" /></button>
-                        </div>
-                        <div className="flex items-center justify-end gap-1.5 sm:hidden">
-                            <PrivateAmount value={currencyFormatter.format(expense.amount)} className="mr-1 whitespace-nowrap text-sm font-bold tracking-wide" />
-                            <button type="button" onClick={() => openEditExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-blue/15 transition hover:bg-blue hover:text-light-blue" aria-label={`Edit ${expense.name}`}><Pencil className="size-4" /></button>
-                            <button type="button" onClick={() => openDeleteExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-red-200 text-red-700 transition hover:bg-red-100" aria-label={`Delete ${expense.name}`}><Trash2 className="size-4" /></button>
-                        </div>
-                        {expense.note && <p className="col-span-2 min-w-0 text-sm leading-relaxed text-blue/65 sm:hidden">{expense.note}</p>}
-                    </div>
+                    <ExpenseHistoryRow key={expense._id} expense={expense} onEdit={() => openEditExpense(expense)} onDelete={() => openDeleteExpense(expense)} />
                 )) : <EmptyState icon={ReceiptText} title="No expenses yet" description="Your recorded expenses will appear here." />}
             </div>
         </section>
@@ -257,25 +253,9 @@ export default function Spending() {
         </div>
         <div className="max-h-96 overflow-y-auto rounded-2xl border border-blue/10">
             {expenses.length > 0 && <div className="sticky top-0 z-10 hidden grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(7rem,0.7fr)_minmax(8rem,0.8fr)_4.5rem] gap-4 border-b border-blue/10 bg-light-blue px-4 py-3 text-xs font-semibold uppercase tracking-widest text-blue/45 sm:grid"><span>Expense</span><span>Note</span><span>Category</span><span className="text-right">Amount</span><span className="text-center">Actions</span></div>}
-            {expenses.map((expense) => (
-                <div key={expense._id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-blue/10 px-3 py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(7rem,0.7fr)_minmax(8rem,0.8fr)_4.5rem] sm:gap-4 sm:px-4">
-                    <div className="min-w-0"><p className="truncate font-semibold">{expense.name}</p><p className="mt-1 text-xs text-blue/55">{new Date(expense.occurredAt).toLocaleDateString("en-NG", { dateStyle: "medium" })}</p></div>
-                    <p className="hidden min-w-0 whitespace-pre-line text-sm leading-relaxed text-blue/65 sm:block">{expense.note || "—"}</p>
-                    <p className="hidden text-sm text-blue/65 sm:block">{expense.category.name}</p>
-                    <PrivateAmount value={currencyFormatter.format(expense.amount)} className="hidden justify-self-end whitespace-nowrap text-sm font-bold tracking-wide sm:inline-flex sm:text-base" />
-                    <div className="hidden items-center justify-end gap-1.5 sm:flex">
-                        <button type="button" onClick={() => openEditExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-blue/15 transition hover:bg-blue hover:text-light-blue" aria-label={`Edit ${expense.name}`}><Pencil className="size-4" /></button>
-                        <button type="button" onClick={() => openDeleteExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-red-200 text-red-700 transition hover:bg-red-100" aria-label={`Delete ${expense.name}`}><Trash2 className="size-4" /></button>
-                    </div>
-                    <div className="flex items-center justify-end gap-1.5 sm:hidden">
-                        <PrivateAmount value={currencyFormatter.format(expense.amount)} className="mr-1 whitespace-nowrap text-sm font-bold tracking-wide" />
-                        <button type="button" onClick={() => openEditExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-blue/15 transition hover:bg-blue hover:text-light-blue" aria-label={`Edit ${expense.name}`}><Pencil className="size-4" /></button>
-                        <button type="button" onClick={() => openDeleteExpense(expense)} className="grid size-8 shrink-0 place-items-center rounded-lg border border-red-200 text-red-700 transition hover:bg-red-100" aria-label={`Delete ${expense.name}`}><Trash2 className="size-4" /></button>
-                    </div>
-                    {expense.note && <p className="col-span-2 min-w-0 whitespace-pre-line text-sm leading-relaxed text-blue/65 sm:hidden">{expense.note}</p>}
-                </div>
-            ))}
+            {paginatedExpenseHistory.map((expense) => <ExpenseHistoryRow key={expense._id} expense={expense} onEdit={() => openEditExpense(expense)} onDelete={() => openDeleteExpense(expense)} horizontalPadding="compact" />)}
         </div>
+        <Pagination page={visibleExpenseHistoryPage} totalItems={expenses.length} pageSize={expenseHistoryPageSize} onPageChange={setExpenseHistoryPage} className="mt-4" />
     </Modal>
     </Layout>;
 }
