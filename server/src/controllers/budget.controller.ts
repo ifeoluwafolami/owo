@@ -1,6 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
 import { BudgetCategoryModel } from "../models/budget-category.model.js";
-import { ExpenseModel } from "../models/expense.model.js";
 import { AppError } from "../utils/app-error.js";
 import type { CreateBudgetCategoryInput, UpdateBudgetCategoryInput } from "../validators/finance.validators.js";
 
@@ -52,11 +51,6 @@ export async function updateBudgetCategory(req: Request, res: Response, next: Ne
 
 export async function archiveBudgetCategory(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const hasExpenses = await ExpenseModel.exists({ user: req.user?.sub, category: req.params.id });
-        if (hasExpenses) {
-            throw new AppError(409, "This category has expenses and cannot be deleted; rename it instead.");
-        }
-
         const category = await BudgetCategoryModel.findOneAndUpdate(
             { _id: req.params.id, user: req.user?.sub, archivedAt: null },
             { $set: { archivedAt: new Date() } },
