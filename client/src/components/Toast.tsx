@@ -1,5 +1,6 @@
 import { CheckCircle2, X, XCircle } from "lucide-react";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type ToastType = "success" | "error";
 
@@ -35,9 +36,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         error: (message) => show(message, "error"),
     }), [show]);
 
-    return <ToastContext.Provider value={value}>
-        {children}
-        <div className="pointer-events-none fixed right-4 top-4 z-[1000] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3" aria-live="polite" aria-atomic="false">
+    const toastViewport = <div className="pointer-events-none fixed right-4 top-4 z-[2000] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3" aria-live="polite" aria-atomic="false">
             {toasts.map((toast) => {
                 const Icon = toast.type === "success" ? CheckCircle2 : XCircle;
                 return <div
@@ -52,7 +51,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     </button>
                 </div>;
             })}
-        </div>
+        </div>;
+
+    return <ToastContext.Provider value={value}>
+        {children}
+        {createPortal(toastViewport, document.body)}
     </ToastContext.Provider>;
 }
 
