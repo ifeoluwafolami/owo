@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import PrivateAmount from "./PrivateAmount";
 
 interface OverviewCardProps {
     title: string;
@@ -71,17 +72,17 @@ export default function OverviewCard({
     }, [amount, animate]);
 
     return (
-        <article ref={cardRef} className={`group flex min-h-44 flex-col justify-between rounded-2xl bg-light-blue p-6 text-blue shadow-lg ${animate ? "transition duration-300 hover:-translate-y-1 hover:shadow-2xl" : ""}`}>
-            <div className="flex items-center justify-between gap-4">
-                <h2 className="font-ferrite text-sm font-medium uppercase tracking-wider">{title}</h2>
+        <article ref={cardRef} className={`group grid min-h-40 min-w-0 grid-rows-[3rem_1fr] rounded-2xl bg-light-blue p-5 text-blue shadow-lg sm:min-h-44 sm:p-6 ${animate ? "transition duration-300 hover:-translate-y-1 hover:shadow-2xl" : ""}`}>
+            <div className="flex items-start justify-between gap-3">
+                <h2 className="pt-1 font-ferrite text-xs font-medium uppercase leading-snug tracking-wider sm:text-sm">{title}</h2>
                 <span className={`grid size-10 shrink-0 place-items-center rounded-xl bg-blue text-light-blue ${animate ? "transition-transform duration-300 group-hover:scale-105" : ""}`}>
                     <Icon className="size-5" aria-hidden="true" />
                 </span>
             </div>
 
-            <div>
-                <p className="text-3xl font-bold tracking-wider">{currencyFormatter.format(animate ? displayAmount : amount)}</p>
-                <p className="mt-2 text-sm text-blue/60">{supportingText}</p>
+            <div className="grid content-end grid-rows-[auto_2.5rem]">
+                <PrivateAmount value={currencyFormatter.format(animate ? displayAmount : amount)} className="text-2xl font-bold leading-tight tracking-wide sm:text-3xl sm:tracking-wider" />
+                <p className="mt-2 line-clamp-2 text-sm leading-5 text-blue/60">{supportingText}</p>
             </div>
         </article>
     );

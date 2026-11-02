@@ -8,8 +8,8 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "chi
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-    light: "bg-light-blue text-blue hover:bg-light-blue/80 hover:text-blue/80",
-    dark: "bg-blue text-light-blue hover:bg-blue/80 hover:text-light-blue/80",
+    light: "border-blue/30 bg-light-blue text-blue hover:border-blue/60 hover:bg-light-blue/80 hover:text-blue/80",
+    dark: "border-transparent bg-blue text-light-blue hover:bg-blue/80 hover:text-light-blue/80",
 };
 
 export default function Button({
@@ -22,7 +22,7 @@ export default function Button({
     return (
         <button
             type={type}
-            className={`inline-flex h-12 items-center justify-center rounded-2xl px-8 font-space-grotesk tracking-widest leading-none uppercase transition-all duration-500 hover:scale-102 ${variantClasses[variant]} ${className}`}
+            className={`inline-flex h-12 items-center justify-center whitespace-nowrap rounded-2xl border px-6 font-space-grotesk text-xs tracking-widest leading-none uppercase transition-all duration-500 hover:scale-102 sm:px-8 sm:text-sm ${variantClasses[variant]} ${className}`}
             {...props}
         >
             {label}

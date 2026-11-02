@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import PrivateAmount from "./PrivateAmount";
 
 interface ExpenseCardProps {
     expenseName: string;
@@ -72,7 +73,7 @@ export default function ExpenseCard({
                 />
             </div>
 
-            <div className="grid grid-cols-[1fr_auto] gap-3">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:gap-3">
                 <div className="rounded-xl border border-blue/15 bg-white/35 px-4 py-3">
                     <p className="text-xs uppercase opacity-50">Expense</p>
                     <p className={`mt-1 font-semibold ${animate ? "transition-all duration-500" : ""} ${visibleStage >= 1 ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}>
@@ -81,9 +82,7 @@ export default function ExpenseCard({
                 </div>
                 <div className="rounded-xl border border-blue/15 bg-white/35 px-4 py-3 text-right">
                     <p className="text-xs uppercase opacity-50">Amount</p>
-                    <p className={`mt-1 font-semibold ${animate ? "transition-all delay-150 duration-500" : ""} ${visibleStage >= 1 ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`}>
-                        {currencyFormatter.format(amount)}
-                    </p>
+                    <PrivateAmount value={currencyFormatter.format(amount)} className={`mt-1 whitespace-nowrap text-sm font-semibold sm:text-base ${animate ? "transition-all delay-150 duration-500" : ""} ${visibleStage >= 1 ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0"}`} />
                 </div>
             </div>
 
@@ -107,9 +106,7 @@ export default function ExpenseCard({
                             style={{ width: visibleStage >= 3 ? `${remainingPercentage}%` : "100%" }}
                         />
                     </div>
-                    <p className="mt-2 text-xs opacity-60">
-                        {currencyFormatter.format(amountLeft)} left to spend
-                    </p>
+                    <PrivateAmount value={`${currencyFormatter.format(amountLeft)} left to spend`} className="mt-2 text-xs opacity-60" />
                 </div>
             </div>
         </div>
