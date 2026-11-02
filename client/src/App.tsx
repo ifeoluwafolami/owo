@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import './App.css'
 import Homepage from './pages/Homepage'
 import Auth from './pages/Auth'
@@ -12,9 +13,33 @@ import Settings from './pages/Settings'
 import VerifyEmail from './pages/VerifyEmail'
 import ProtectedRoute from './components/ProtectedRoute'
 
+const pageTitles: Record<string, string> = {
+  '/': 'OWO',
+  '/login': 'Login | OWO',
+  '/signup': 'Sign Up | OWO',
+  '/reset-password': 'Reset Password | OWO',
+  '/verify-email': 'Verify Email | OWO',
+  '/overview': 'Overview | OWO',
+  '/savings': 'Savings | OWO',
+  '/spending': 'Spending | OWO',
+  '/profile': 'Profile | OWO',
+  '/settings': 'Settings | OWO',
+}
+
+function PageTitle() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    document.title = pageTitles[pathname] ?? 'Page Not Found | OWO'
+  }, [pathname])
+
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <PageTitle />
       <Routes>
 
         <Route path="/" element={<Homepage />} />
