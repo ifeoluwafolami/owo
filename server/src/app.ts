@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { config } from "./config/config.js";
 
@@ -59,6 +60,7 @@ app.use("/api/overview", overviewRouter);
 // 7. In production, serve the React application from this same origin.
 if (config.nodeEnv === "production") {
     const clientDistPath = fileURLToPath(new URL("../../client/dist", import.meta.url));
+    const clientIndexHtml = readFileSync(new URL("../../client/dist/index.html", import.meta.url), "utf8");
 
     app.use(express.static(clientDistPath, { index: false }));
     app.use((req, res, next) => {
@@ -67,7 +69,8 @@ if (config.nodeEnv === "production") {
             !req.path.startsWith("/api") &&
             req.accepts("html")
         ) {
-            res.sendFile("index.html", { root: clientDistPath });
+            const requestOrigin = `${req.protocol}://${req.get("host")}`;
+            res.type("html").send(clientIndexHtml.replaceAll("__OWO_ORIGIN__", requestOrigin));
             return;
         }
 
