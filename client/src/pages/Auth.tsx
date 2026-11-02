@@ -162,7 +162,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                         className="pointer-events-none absolute inset-0 z-0 bg-light-blue/45 blur-2xl"
                     /> */}
 
-                    <div className="relative z-10 flex min-h-full items-center justify-center px-6 py-10 sm:px-10">
+                    <div className="relative z-10 flex min-h-full items-center justify-center px-4 py-8 sm:px-10 sm:py-10">
                         <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                             key={mode}
@@ -203,12 +203,12 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                     {/* <h1 className="text-3xl font-semibold">
                                         {isSignup ? "Create your account" : "Welcome back"}
                                     </h1> */}
-                                    <p className="mt-2 text-lg uppercase tracking-wider text-blue/65">
+                                    <p className="mt-2 text-base uppercase tracking-wider text-blue/65 sm:text-lg">
                                         {isSignup ? "Start making every naira count." : "Manage your money wisely."}
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-3 min-[380px]:grid-cols-2">
                                     <button
                                         type="button"
                                         disabled
@@ -237,7 +237,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
 
                                 <form className="space-y-4" onSubmit={handleSubmit}>
                                     {isSignup && (
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid gap-3 min-[380px]:grid-cols-2">
                                             <label className="space-y-1.5 text-sm font-semibold">
                                                 <span>First name</span>
                                                 <input className={inputClasses} name="firstName" autoComplete="given-name" placeholder="Ada" required />

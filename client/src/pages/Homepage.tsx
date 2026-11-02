@@ -37,9 +37,8 @@ export default function Homepage() {
                     className="pointer-events-none absolute inset-0 z-0 bg-light-blue/30 blur-2xl"
                 /> */}
 
-                <header className="fixed left-0 top-0 z-200 flex h-20 w-full items-center justify-between py-4 px-8">
-                    <div></div>
-                    <div className="flex gap-4">
+                <header className="fixed left-0 top-0 z-200 flex h-20 w-full items-center justify-center px-4 py-4 sm:justify-end sm:px-8">
+                    <div className="flex items-center justify-center gap-3 sm:gap-4">
                         <Link to="/login">
                             <Button label="Login" variant="light" />
                         </Link>
@@ -54,8 +53,8 @@ export default function Homepage() {
 
                 <main className="relative z-10 flex flex-col items-center">
                     {/* Hero */}
-                    <section className="flex h-screen w-full shrink-0 flex-col items-center justify-center gap-8">
-                        <h1 className="text-9xl font-ferrite">OWO</h1>
+                    <section className="flex h-screen w-full shrink-0 flex-col items-center justify-center gap-8 px-4 sm:px-8">
+                        <h1 className="font-ferrite text-7xl sm:text-9xl">OWO</h1>
                         <Button
                             label="Get Started"
                             variant="dark"
@@ -65,13 +64,13 @@ export default function Homepage() {
                     </section>
 
                     {/* How it works */}
-                    <section id="how-it-works" className="flex min-h-screen w-full flex-col items-center justify-center gap-4">
-                        <h1 className="text-4xl uppercase">Money talks. <span className="font-ferrite text-blue text-5xl">OWO</span> listens.</h1>
-                        <p className="text-xl tracking-wide mb-8">Keep track of your spending, crush your savings goals and ensure every naira is accounted for.</p>
+                    <section id="how-it-works" className="flex min-h-screen w-full flex-col items-center justify-center gap-4 px-4 py-16 sm:px-8 lg:py-20">
+                        <h1 className="text-center text-3xl uppercase sm:text-4xl">Money talks. <span className="font-ferrite text-4xl text-blue sm:text-5xl">OWO</span> listens.</h1>
+                        <p className="mb-8 max-w-3xl text-center text-base tracking-wide sm:text-xl">Keep track of your spending, crush your savings goals and ensure every naira is accounted for.</p>
 
-                        <div className="flex gap-20 h-[60vh] justify-center items-center">
+                        <div className="flex w-full max-w-6xl flex-col items-center justify-center gap-8 lg:h-[60vh] lg:flex-row lg:gap-20">
                             <div
-                                className="flex h-full w-[30vw] flex-col items-center justify-between rounded-2xl bg-blue p-8 shadow-2xl shadow-blue transition-transform duration-300 hover:scale-[1.03]"
+                                className="flex min-h-[34rem] w-full max-w-xl flex-col items-center justify-between gap-8 rounded-2xl bg-blue p-5 shadow-2xl shadow-blue transition-transform duration-300 hover:scale-[1.03] sm:p-8 lg:h-full lg:min-h-0 lg:w-[30vw] lg:max-w-none"
                             >
                                 <div className="flex flex-col gap-2 text-center">
                                     <h3 className="text-4xl font-ferrite uppercase tracking-widest font-medium">Savings</h3>
@@ -90,7 +89,7 @@ export default function Homepage() {
                             </div>
 
                             <div
-                                className="flex h-full w-[30vw] flex-col items-center justify-between rounded-2xl bg-blue p-8 shadow-2xl shadow-blue transition-transform duration-300 hover:scale-[1.03]"
+                                className="flex min-h-[34rem] w-full max-w-xl flex-col items-center justify-between gap-8 rounded-2xl bg-blue p-5 shadow-2xl shadow-blue transition-transform duration-300 hover:scale-[1.03] sm:p-8 lg:h-full lg:min-h-0 lg:w-[30vw] lg:max-w-none"
                                 onMouseEnter={() => setExpensesReplay((value) => value + 1)}
                             >
                                 <div className="flex flex-col gap-2 text-center">
@@ -104,7 +103,7 @@ export default function Homepage() {
                                     category={featuredExpense.category}
                                     categoryBudget={featuredExpense.categoryBudget}
                                     replaySignal={expensesReplay}
-                                    className="w-[85%]"
+                                    className="w-full sm:w-[85%]"
                                 />
                                 
                                 <p className="text-center">Log every expense and always know exactly how much you have left to spend.</p>

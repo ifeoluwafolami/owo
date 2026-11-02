@@ -30,11 +30,11 @@ export default function VerifyEmail() {
         });
     }, [toast, token]);
 
-    return <Layout><main className="grid min-h-screen place-items-center px-6 text-center">
-        <div className="max-w-lg rounded-3xl bg-light-blue p-8 text-blue shadow-xl">
-            <h1 className="text-2xl font-semibold">{success ? "Email verified" : "Email verification"}</h1>
-            <p className="mt-3">{message}</p>
-            <Link className="mt-6 inline-flex rounded-xl bg-blue px-6 py-3 font-semibold text-light-blue" to="/login">
+    return <Layout><main className="grid min-h-screen place-items-center px-4 py-10 text-center sm:px-6">
+        <div className="w-full max-w-lg rounded-2xl bg-light-blue p-5 text-blue shadow-xl sm:rounded-3xl sm:p-8">
+            <h1 className="text-xl font-semibold sm:text-2xl">{success ? "Email verified" : "Email verification"}</h1>
+            <p className="mt-3 break-words text-sm sm:text-base">{message}</p>
+            <Link className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-blue px-5 py-3 font-semibold text-light-blue sm:w-auto sm:px-6" to="/login">
                 Continue to login
             </Link>
         </div>
