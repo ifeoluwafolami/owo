@@ -52,9 +52,9 @@ export default function RecentExpenseCategoryCard({ activity }: RecentExpenseCat
                     <p className="mt-1 text-xs text-blue/50">{new Date(lastExpense.occurredAt).toLocaleDateString("en-NG", { dateStyle: "medium" })}</p>
                 </div>
             </div>
-            <p className="mt-3 border-t border-blue/10 pt-3 text-sm leading-relaxed text-blue/65">
-                {lastExpense.note || "No note was added for this expense."}
-            </p>
+            {lastExpense.note && <p className="mt-3 border-t border-blue/10 pt-3 text-sm leading-relaxed text-blue/65">
+                {lastExpense.note}
+            </p>}
         </div>
     </article>;
 }
