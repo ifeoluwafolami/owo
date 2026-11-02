@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 
 interface PrivacyContextValue {
     amountsVisible: boolean;
+    privacyVersion: number;
     toggleAmounts(): void;
 }
 
@@ -9,10 +10,15 @@ const PrivacyContext = createContext<PrivacyContextValue | null>(null);
 
 export function PrivacyProvider({ children }: { children: ReactNode }) {
     const [amountsVisible, setAmountsVisible] = useState(false);
+    const [privacyVersion, setPrivacyVersion] = useState(0);
     const value = useMemo(() => ({
         amountsVisible,
-        toggleAmounts: () => setAmountsVisible((visible) => !visible),
-    }), [amountsVisible]);
+        privacyVersion,
+        toggleAmounts: () => {
+            setAmountsVisible((visible) => !visible);
+            setPrivacyVersion((version) => version + 1);
+        },
+    }), [amountsVisible, privacyVersion]);
 
     return <PrivacyContext.Provider value={value}>{children}</PrivacyContext.Provider>;
 }
