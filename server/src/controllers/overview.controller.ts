@@ -31,7 +31,7 @@ export async function getOverview(req: Request, res: Response, next: NextFunctio
         const { start, end } = currentMonthRange();
         const userId = req.user?.sub;
 
-        const [spentThisMonth, extraIncomeThisMonth, savedThisMonth, budgetResult, savingsResult, recentExpenses] = await Promise.all([
+        const [spentThisMonth, extraIncomeThisMonth, savedThisMonth, budgetResult, savingsResult, activeBudgetCategories] = await Promise.all([
             sumForUser(ExpenseModel, userId, "occurredAt", start, end),
             sumForUser(IncomeModel, userId, "receivedAt", start, end),
             sumForUser(SavingsContributionModel, userId, "contributedAt", start, end),
@@ -43,10 +43,53 @@ export async function getOverview(req: Request, res: Response, next: NextFunctio
                 { $match: { user: new SavingsGoalModel.base.Types.ObjectId(userId), archivedAt: null } },
                 { $group: { _id: null, totalSaved: { $sum: "$savedAmount" }, totalTarget: { $sum: "$targetAmount" } } },
             ]),
-            ExpenseModel.find({ user: userId })
-                .populate("category", "name monthlyLimit")
-                .sort({ occurredAt: -1, _id: -1 })
-                .limit(3),
+            ExpenseModel.aggregate([
+                {
+                    $match: {
+                        user: new ExpenseModel.base.Types.ObjectId(userId),
+                        occurredAt: { $gte: start, $lt: end },
+                    },
+                },
+                { $sort: { occurredAt: -1, _id: -1 } },
+                {
+                    $group: {
+                        _id: "$category",
+                        spent: { $sum: "$amount" },
+                        lastExpense: {
+                            $first: {
+                                name: "$name",
+                                amount: "$amount",
+                                note: "$note",
+                                occurredAt: "$occurredAt",
+                            },
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: BudgetCategoryModel.collection.name,
+                        localField: "_id",
+                        foreignField: "_id",
+                        as: "category",
+                    },
+                },
+                { $unwind: "$category" },
+                { $match: { "category.archivedAt": null, spent: { $gt: 0 } } },
+                { $sort: { "lastExpense.occurredAt": -1 } },
+                { $limit: 3 },
+                {
+                    $project: {
+                        _id: 0,
+                        category: {
+                            _id: "$category._id",
+                            name: "$category.name",
+                            monthlyLimit: "$category.monthlyLimit",
+                        },
+                        spent: 1,
+                        lastExpense: 1,
+                    },
+                },
+            ]),
         ]);
 
         const monthlyBudget = budgetResult[0]?.total ?? 0;
@@ -60,7 +103,7 @@ export async function getOverview(req: Request, res: Response, next: NextFunctio
                 monthlyBudget,
                 remainingBudget: Math.max(0, monthlyBudget - spentThisMonth),
             },
-            recentExpenses,
+            activeBudgetCategories,
         });
     } catch (error) {
         next(error);

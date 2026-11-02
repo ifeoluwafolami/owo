@@ -9,7 +9,14 @@ export interface Expense {
     name: string;
     amount: number;
     occurredAt: string;
+    note?: string;
     category: BudgetCategory;
+}
+
+export interface ActiveBudgetCategory {
+    category: BudgetCategory;
+    spent: number;
+    lastExpense: Pick<Expense, "name" | "amount" | "occurredAt" | "note">;
 }
 
 export interface SavingsGoal {
