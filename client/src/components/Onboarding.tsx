@@ -7,6 +7,7 @@ import MoneyInput from "./MoneyInput";
 import { applyTheme, DEFAULT_THEME, themes, type ThemeId } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useToast } from "./Toast";
 
 interface OnboardingProps {
     isOpen: boolean;
@@ -30,6 +31,7 @@ const inputClasses = "h-12 w-full rounded-xl border border-blue/20 bg-white/50 p
 
 export default function Onboarding({ isOpen, onComplete }: OnboardingProps) {
     const { reloadUser } = useAuth();
+    const toast = useToast();
     const [step, setStep] = useState(1);
     const [birthday, setBirthday] = useState("");
     const [monthlyIncome, setMonthlyIncome] = useState("");
@@ -41,46 +43,58 @@ export default function Onboarding({ isOpen, onComplete }: OnboardingProps) {
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [inAppNotifications, setInAppNotifications] = useState(true);
 
-    const finishWithoutSaving = () => {
-        void api("/users/me/onboarding", {
-            method: "POST",
-            body: JSON.stringify({ preferences: {} }),
-        }).then(reloadUser).then(onComplete);
+    const finishWithoutSaving = async () => {
+        try {
+            await api("/users/me/onboarding", {
+                method: "POST",
+                body: JSON.stringify({ preferences: {} }),
+            });
+            await reloadUser();
+            toast.success("Setup skipped. You can update everything later.");
+            onComplete();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Unable to finish setup.");
+        }
     };
 
     const finishOnboarding = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        await api("/users/me/onboarding", {
-            method: "POST",
-            body: JSON.stringify({
-                ...(birthday ? { birthday } : {}),
-                ...(Number(monthlyIncome) > 0 ? { monthlyIncome: Number(monthlyIncome) } : {}),
-                preferences: {
-                    currency,
-                    overspendingThreshold: Number(threshold || 90),
-                    emailNotifications,
-                    inAppNotifications,
-                    theme,
-                },
-            }),
-        });
-        await Promise.all([
-            ...budgetCategories
-                .filter((category) => category.name.trim() && Number(category.budget) >= 0)
-                .map((category) => api("/budgets", {
-                    method: "POST",
-                    body: JSON.stringify({ name: category.name.trim(), monthlyLimit: Number(category.budget) }),
-                })),
-            ...savingsGoals
-                .filter((goal) => goal.title.trim() && Number(goal.targetAmount) > 0 && goal.targetDate)
-                .map((goal) => api("/savings/goals", {
-                    method: "POST",
-                    body: JSON.stringify({ title: goal.title.trim(), targetAmount: Number(goal.targetAmount), targetDate: goal.targetDate }),
-                })),
-        ]);
-        applyTheme(theme);
-        await reloadUser();
-        onComplete();
+        try {
+            await api("/users/me/onboarding", {
+                method: "POST",
+                body: JSON.stringify({
+                    ...(birthday ? { birthday } : {}),
+                    ...(Number(monthlyIncome) > 0 ? { monthlyIncome: Number(monthlyIncome) } : {}),
+                    preferences: {
+                        currency,
+                        overspendingThreshold: Number(threshold || 90),
+                        emailNotifications,
+                        inAppNotifications,
+                        theme,
+                    },
+                }),
+            });
+            await Promise.all([
+                ...budgetCategories
+                    .filter((category) => category.name.trim() && Number(category.budget) >= 0)
+                    .map((category) => api("/budgets", {
+                        method: "POST",
+                        body: JSON.stringify({ name: category.name.trim(), monthlyLimit: Number(category.budget) }),
+                    })),
+                ...savingsGoals
+                    .filter((goal) => goal.title.trim() && Number(goal.targetAmount) > 0 && goal.targetDate)
+                    .map((goal) => api("/savings/goals", {
+                        method: "POST",
+                        body: JSON.stringify({ title: goal.title.trim(), targetAmount: Number(goal.targetAmount), targetDate: goal.targetDate }),
+                    })),
+            ]);
+            applyTheme(theme);
+            await reloadUser();
+            toast.success("Your OWO setup is complete.");
+            onComplete();
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Unable to finish setup.");
+        }
     };
 
     return (

@@ -9,18 +9,19 @@ import Layout from "../components/Layout";
 import Modal from "../components/Modal";
 import MoneyInput from "../components/MoneyInput";
 import OverviewCard from "../components/OverviewCard";
+import { useToast } from "../components/Toast";
 import type { BudgetCategory, Expense } from "../finance";
 import { currencyFormatter, localDateValue } from "../finance";
 
 interface Income { _id: string; source: string; amount: number; receivedAt: string }
 
 export default function Spending() {
+    const toast = useToast();
     const [searchParams] = useSearchParams();
     const [categories, setCategories] = useState<BudgetCategory[]>([]);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [income, setIncome] = useState<Income[]>([]);
     const [modal, setModal] = useState<"expense" | "income" | "category" | "history" | null>(searchParams.get("action") === "add-expense" ? "expense" : null);
-    const [error, setError] = useState("");
     const [expenseDraft, setExpenseDraft] = useState({ name: "", amount: "", categoryId: "", occurredAt: localDateValue() });
     const [incomeDraft, setIncomeDraft] = useState({ source: "", amount: "", receivedAt: localDateValue() });
     const [categoryDraft, setCategoryDraft] = useState({ name: "", monthlyLimit: "" });
@@ -35,8 +36,8 @@ export default function Spending() {
             setExpenses(expenseResult.expenses);
             setIncome(incomeResult.income);
             setExpenseDraft((draft) => ({ ...draft, categoryId: draft.categoryId || budgetResult.categories[0]?._id || "" }));
-        }).catch((reason: Error) => setError(reason.message));
-    }, []);
+        }).catch((reason: Error) => toast.error(reason.message));
+    }, [toast]);
 
     const totals = useMemo(() => {
         const totalBudget = categories.reduce((sum, item) => sum + item.monthlyLimit, 0);
@@ -46,39 +47,41 @@ export default function Spending() {
     }, [categories, expenses, income]);
 
     const submitExpense = async (event: FormEvent) => {
-        event.preventDefault(); setError("");
+        event.preventDefault();
         try {
             const result = await api<{ expense: Expense }>("/expenses", { method: "POST", body: JSON.stringify({ ...expenseDraft, amount: Number(expenseDraft.amount) }) });
             setExpenses((items) => [result.expense, ...items]);
             setExpenseDraft({ name: "", amount: "", categoryId: categories[0]?._id ?? "", occurredAt: localDateValue() });
             setModal(null);
-        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save expense."); }
+            toast.success("Expense recorded.");
+        } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Unable to save expense."); }
     };
 
     const submitIncome = async (event: FormEvent) => {
-        event.preventDefault(); setError("");
+        event.preventDefault();
         try {
             const result = await api<{ income: Income }>("/income", { method: "POST", body: JSON.stringify({ ...incomeDraft, amount: Number(incomeDraft.amount) }) });
             setIncome((items) => [result.income, ...items]);
             setIncomeDraft({ source: "", amount: "", receivedAt: localDateValue() });
             setModal(null);
-        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save income."); }
+            toast.success("Income recorded.");
+        } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Unable to save income."); }
     };
 
     const submitCategory = async (event: FormEvent) => {
-        event.preventDefault(); setError("");
+        event.preventDefault();
         try {
             const result = await api<{ category: BudgetCategory }>("/budgets", { method: "POST", body: JSON.stringify({ name: categoryDraft.name, monthlyLimit: Number(categoryDraft.monthlyLimit) }) });
             setCategories((items) => [...items, result.category]);
             setExpenseDraft((draft) => ({ ...draft, categoryId: draft.categoryId || result.category._id }));
             setCategoryDraft({ name: "", monthlyLimit: "" });
             setModal(null);
-        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save category."); }
+            toast.success("Budget category created.");
+        } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Unable to save category."); }
     };
 
     return <Layout showHeader><main className="min-h-screen px-6 py-12 sm:px-10 lg:px-16">
         <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-ferrite text-xs uppercase">Plan it. Track it.</p><h1 className="mt-2 text-3xl">Spending</h1></div><div className="flex gap-3"><Button label="Add Income" onClick={() => setModal("income")} /><Button label="Log Expense" onClick={() => setModal("expense")} /></div></div>
-        {error && <p role="alert" className="mt-5 rounded-xl bg-red-100 p-4 text-red-800">{error}</p>}
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <OverviewCard title="Income recorded" amount={totals.totalIncome} icon={CircleDollarSign} supportingText="All recorded income" />
             <OverviewCard title="Monthly budget" amount={totals.totalBudget} icon={WalletCards} supportingText="Across your categories" />

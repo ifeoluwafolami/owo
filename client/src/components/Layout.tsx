@@ -2,6 +2,7 @@ import { LayoutDashboard, LogOut, PiggyBank, ReceiptText, Settings, User, UserRo
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
+import { useToast } from "./Toast";
 
 interface LayoutProps {
     children: ReactNode;
@@ -17,6 +18,7 @@ const navigationItems = [
 export default function Layout ({ children, showHeader = false }: LayoutProps) {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const toast = useToast();
     const { pathname } = useLocation();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -48,6 +50,7 @@ export default function Layout ({ children, showHeader = false }: LayoutProps) {
     const handleLogout = async () => {
         setIsProfileMenuOpen(false);
         await logout();
+        toast.success("You have been logged out.");
         navigate("/login");
     };
 

@@ -11,6 +11,7 @@ import SavingsGoalCard from "../components/SavingsGoalCard";
 import type { Expense, SavingsGoal } from "../finance";
 import { getWelcomeMessage } from "../welcomeMessage";
 import { useAuth } from "../auth";
+import { useToast } from "../components/Toast";
 
 interface OverviewData {
     overview: {
@@ -23,12 +24,12 @@ interface OverviewData {
 }
 
 export default function Overview() {
+    const toast = useToast();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [welcomeMessage] = useState(() => getWelcomeMessage(user?.firstName));
     const [data, setData] = useState<OverviewData | null>(null);
     const [goals, setGoals] = useState<SavingsGoal[]>([]);
-    const [error, setError] = useState("");
 
     useEffect(() => {
         void Promise.all([
@@ -37,8 +38,8 @@ export default function Overview() {
         ]).then(([overview, savings]) => {
             setData(overview);
             setGoals(savings.goals);
-        }).catch((reason: Error) => setError(reason.message));
-    }, []);
+        }).catch((reason: Error) => toast.error(reason.message));
+    }, [toast]);
 
     const stats = [
         { id: "total", title: "Total saved", amount: data?.overview.totalSaved ?? 0, icon: PiggyBank, supportingText: "Across all savings targets" },
@@ -53,7 +54,6 @@ export default function Overview() {
                 <div><p className="font-ferrite text-xs uppercase tracking-wide">{welcomeMessage[0]}</p><h1 className="mt-2 text-3xl">{welcomeMessage[1]}</h1></div>
                 <Button label="Log an Expense" onClick={() => navigate("/spending?action=add-expense")} />
             </div>
-            {error && <p role="alert" className="mb-5 rounded-xl bg-red-100 p-4 text-red-800">{error}</p>}
             <div className="grid gap-4 rounded-2xl bg-blue/20 p-4 sm:grid-cols-2 xl:grid-cols-4">
                 {stats.map((stat) => <OverviewCard key={stat.id} {...stat} />)}
             </div>

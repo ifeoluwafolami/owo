@@ -4,11 +4,12 @@ import './index.css'
 import App from './App.tsx'
 import { initializeTheme } from './theme.ts'
 import { AuthProvider } from './auth.tsx'
+import { ToastProvider } from './components/Toast.tsx'
 
 initializeTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider><App /></AuthProvider>
+    <ToastProvider><AuthProvider><App /></AuthProvider></ToastProvider>
   </StrictMode>,
 )

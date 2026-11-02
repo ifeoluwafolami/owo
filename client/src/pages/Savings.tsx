@@ -7,16 +7,17 @@ import Layout from "../components/Layout";
 import Modal from "../components/Modal";
 import MoneyInput from "../components/MoneyInput";
 import SavingsGoalCard from "../components/SavingsGoalCard";
+import { useToast } from "../components/Toast";
 import { currencyFormatter, localDateValue, type SavingsContribution, type SavingsGoal } from "../finance";
 
 export default function Savings() {
+    const toast = useToast();
     const [goals, setGoals] = useState<SavingsGoal[]>([]);
     const [history, setHistory] = useState<SavingsContribution[]>([]);
     const [modal, setModal] = useState<"goal" | "contribution" | "history" | null>(null);
     const [selectedGoal, setSelectedGoal] = useState("");
     const [goalDraft, setGoalDraft] = useState({ title: "", targetAmount: "", targetDate: "" });
     const [contributionDraft, setContributionDraft] = useState({ amount: "", contributedAt: localDateValue() });
-    const [error, setError] = useState("");
 
     useEffect(() => {
         void Promise.all([
@@ -26,8 +27,8 @@ export default function Savings() {
             setGoals(goalResult.goals);
             setHistory(historyResult.contributions);
             setSelectedGoal((current) => current || goalResult.goals[0]?._id || "");
-        }).catch((reason: Error) => setError(reason.message));
-    }, []);
+        }).catch((reason: Error) => toast.error(reason.message));
+    }, [toast]);
 
     const createGoal = async (event: FormEvent) => {
         event.preventDefault();
@@ -37,7 +38,8 @@ export default function Savings() {
             setSelectedGoal(result.goal._id);
             setGoalDraft({ title: "", targetAmount: "", targetDate: "" });
             setModal(null);
-        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to create goal."); }
+            toast.success("Savings goal created.");
+        } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Unable to create goal."); }
     };
 
     const addContribution = async (event: FormEvent) => {
@@ -48,7 +50,8 @@ export default function Savings() {
             setGoals((items) => items.map((goal) => goal._id === result.goal._id ? result.goal : goal));
             setContributionDraft({ amount: "", contributedAt: localDateValue() });
             setModal(null);
-        } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to add contribution."); }
+            toast.success("Savings contribution added.");
+        } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Unable to add contribution."); }
     };
 
     const totalSaved = goals.reduce((sum, goal) => sum + goal.savedAmount, 0);
@@ -57,7 +60,6 @@ export default function Savings() {
 
     return <Layout showHeader><main className="min-h-screen px-6 py-12 sm:px-10 lg:px-16">
         <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="font-ferrite text-xs uppercase">Save, on purpose.</p><h1 className="mt-2 text-3xl">Savings</h1></div><div className="flex gap-3"><Button label="Add Savings" onClick={() => setModal("contribution")} disabled={!goals.length} /><Button label="New Goal" onClick={() => setModal("goal")} /></div></div>
-        {error && <p role="alert" className="mt-5 rounded-xl bg-red-100 p-4 text-red-800">{error}</p>}
         <section className="mt-6 rounded-2xl bg-light-blue p-6 text-blue"><div className="flex items-end justify-between"><div><p className="font-ferrite uppercase">Overall savings</p><p className="mt-2 text-3xl font-bold">{currencyFormatter.format(totalSaved)}</p><p className="text-sm text-blue/60">of {currencyFormatter.format(totalTarget)}</p></div><span className="rounded-full bg-blue px-3 py-1 text-light-blue">{progress.toFixed(0)}%</span></div><div className="mt-5 h-4 overflow-hidden rounded-full bg-blue/15"><div className="h-full rounded-full bg-blue" style={{ width: `${progress}%` }} /></div></section>
         <section className="mt-10"><div className="mb-4 flex items-center justify-between gap-4"><h2 className="text-2xl">Your Savings Targets</h2><Button label="History" onClick={() => setModal("history")} /></div><div className="grid gap-6 md:grid-cols-2">{goals.map((goal) => <SavingsGoalCard key={goal._id} title={goal.title} targetAmount={goal.targetAmount} savedAmount={goal.savedAmount} targetDate={goal.targetDate} animate={false} />)}{!goals.length && <EmptyState icon={PiggyBank} title="Start your first savings goal" description="Set a target and build toward it." actionLabel="New Goal" onAction={() => setModal("goal")} className="md:col-span-2" />}</div></section>
     </main>

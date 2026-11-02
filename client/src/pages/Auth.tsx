@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Onboarding from "../components/Onboarding";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../auth";
+import { useToast } from "../components/Toast";
 
 type AuthMode = "login" | "signup";
 
@@ -39,7 +40,8 @@ function AppleIcon() {
 
 export default function Auth({ initialMode = "login" }: AuthProps) {
     const navigate = useNavigate();
-    const { login, signup } = useAuth();
+    const { login, signup, resendVerification } = useAuth();
+    const toast = useToast();
     const [mode, setMode] = useState<AuthMode>(initialMode);
     const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
     const [resetEmail, setResetEmail] = useState("");
@@ -47,48 +49,86 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
     const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [status, setStatus] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [verificationEmail, setVerificationEmail] = useState("");
+    const [resendingVerification, setResendingVerification] = useState(false);
+    const [isVerificationReminderOpen, setIsVerificationReminderOpen] = useState(false);
+    const [needsOnboardingAfterLogin, setNeedsOnboardingAfterLogin] = useState(false);
     const isSignup = mode === "signup";
 
     const selectMode = (nextMode: AuthMode) => {
         setMode(nextMode);
-        setStatus("");
         navigate(nextMode === "login" ? "/login" : "/signup", { replace: true });
+    };
+
+    const continueIntoApp = (needsOnboarding: boolean) => {
+        setIsVerificationReminderOpen(false);
+        if (needsOnboarding) setIsOnboardingOpen(true);
+        else navigate("/overview");
+    };
+
+    const finishLogin = (user: Awaited<ReturnType<typeof login>>) => {
+        const needsOnboarding = !user.onboardingCompleted;
+
+        if (!user.emailVerified) {
+            setVerificationEmail(user.email);
+            setNeedsOnboardingAfterLogin(needsOnboarding);
+            setIsVerificationReminderOpen(true);
+            return;
+        }
+
+        continueIntoApp(needsOnboarding);
     };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setStatus("");
-        const data = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const data = new FormData(form);
         const email = String(data.get("email") ?? "");
         const password = String(data.get("password") ?? "");
         const confirmPassword = String(data.get("confirmPassword") ?? "");
         if (isSignup && password !== confirmPassword) {
-            setStatus("The passwords do not match.");
+            toast.error("The passwords do not match.");
             return;
         }
 
         setSubmitting(true);
         try {
             if (isSignup) {
-                const message = await signup({
+                const result = await signup({
                     firstName: String(data.get("firstName") ?? ""),
                     lastName: String(data.get("lastName") ?? ""),
                     email,
                     password,
                 });
-                setStatus(message);
-                event.currentTarget.reset();
+                setVerificationEmail(email);
+                toast.success(result.message);
+                form.reset();
+                const user = await login(email, password);
+                finishLogin(user);
             } else {
                 const user = await login(email, password);
-                if (user.onboardingCompleted) navigate("/overview");
-                else setIsOnboardingOpen(true);
+                toast.success("Welcome back.");
+                finishLogin(user);
             }
         } catch (error) {
-            setStatus(error instanceof Error ? error.message : "Unable to authenticate.");
+            toast.error(error instanceof Error ? error.message : "Unable to authenticate.");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        if (!verificationEmail || resendingVerification) return;
+
+        setResendingVerification(true);
+        try {
+            const message = await resendVerification(verificationEmail);
+            toast.success(`${message} Check your spam folder too.`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Unable to resend the verification email.");
+        } finally {
+            setResendingVerification(false);
         }
     };
 
@@ -99,6 +139,7 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
     const handleForgotPassword = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setIsResetLinkSent(true);
+        toast.error("Password recovery is not enabled yet.");
     };
 
     return (
@@ -262,8 +303,6 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                                         </label>
                                     )}
 
-                                    {status && <p role="status" className={`rounded-xl p-3 text-sm ${status.toLowerCase().includes("created") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{status}</p>}
-
                                     <Button
                                         type="submit"
                                         label={submitting ? "Please wait…" : isSignup ? "Create account" : "Login"}
@@ -279,6 +318,31 @@ export default function Auth({ initialMode = "login" }: AuthProps) {
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={isVerificationReminderOpen}
+                onClose={() => continueIntoApp(needsOnboardingAfterLogin)}
+                title="Verify your email"
+            >
+                <div className="space-y-5">
+                    <p className="leading-relaxed text-blue/70">
+                        Please verify <strong className="text-blue">{verificationEmail}</strong>. You can continue using OWO now, and we will remind you again the next time you log in.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <Button
+                            label={resendingVerification ? "Sending…" : "Resend email"}
+                            variant="light"
+                            onClick={handleResendVerification}
+                            disabled={resendingVerification}
+                        />
+                        <Button
+                            label="Continue to OWO"
+                            variant="dark"
+                            onClick={() => continueIntoApp(needsOnboardingAfterLogin)}
+                        />
+                    </div>
+                </div>
+            </Modal>
 
             <Modal
                 isOpen={isForgotPasswordOpen}

@@ -23,9 +23,16 @@ async function parseResponse(response: Response) {
     if (response.status === 204) return undefined;
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
+        const detailMessages = body.details && typeof body.details === "object"
+            ? Object.values(body.details as Record<string, unknown>)
+                .flatMap((value) => Array.isArray(value) ? value : [value])
+                .filter((value): value is string => typeof value === "string" && value.length > 0)
+            : [];
         throw new ApiError(
             response.status,
-            body.error ?? body.message ?? "Something went wrong. Please try again.",
+            detailMessages.length
+                ? [...new Set(detailMessages)].join("\n")
+                : body.error ?? body.message ?? "Something went wrong. Please try again.",
             body.details,
         );
     }

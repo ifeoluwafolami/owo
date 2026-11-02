@@ -40,10 +40,6 @@ export const authenticate: RequestHandler = async (req, _res, next) => {
             throw new AppError(401, "Your session is no longer valid.");
         }
 
-        if (!user.emailVerified) {
-            throw new AppError(403, "Please verify your email address.");
-        }
-
         req.user = payload;
 
         next();

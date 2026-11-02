@@ -3,13 +3,8 @@ import test from "node:test";
 
 test("access token contains the session identity and rejects tampering", async () => {
     process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/owo-test";
-    process.env.SMTP_HOST = "localhost";
-    process.env.SMTP_PORT = "1025";
-    process.env.SMTP_SECURE = "false";
-    process.env.SMTP_USER = "test";
-    process.env.SMTP_PASS = "test";
-    process.env.EMAIL_FROM = "test@example.com";
-    process.env.APP_URL = "http://localhost:5173";
+    process.env.RESEND_API_KEY = "re_test_key";
+    process.env.EMAIL_FROM = "OWO <verify@example.com>";
     process.env.JWT_ACCESS_SECRET = "test-secret-that-is-not-used-outside-tests";
 
     const { generateAccessToken, verifyAccessToken } = await import("../utils/jwt.js");

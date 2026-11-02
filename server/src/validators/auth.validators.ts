@@ -13,7 +13,7 @@ export const signupSchema = z.object({
     .trim().transform((email) => email.toLowerCase()),
 
     password: z.string()
-    .min(12, "Password must contain at least 12 characters")
+    .min(8, "Password must contain at least 8 characters")
     .max(72, "Password cannot exceed 72 characters")
     .regex(/[a-z]/, "Password must contain a lowercase letter")
     .regex(/[A-Z]/, "Password must contain an uppercase letter")
@@ -33,7 +33,8 @@ export const verifyEmailSchema = z.object({
 });
 
 export const resendVerificationSchema = z.object({
-    email: z.email("Please provide a valid email address").trim().max(254).transform((email) => email.toLowerCase()),
+    email: z.email("Please provide a valid email address").trim().max(254)
+    .transform((email) => email.toLowerCase()),
 });
 
 export type SignupInput = z.infer<typeof signupSchema>;

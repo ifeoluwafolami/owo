@@ -27,7 +27,8 @@ interface AuthContextValue {
     user: CurrentUser | null;
     loading: boolean;
     login(email: string, password: string): Promise<CurrentUser>;
-    signup(input: { firstName: string; lastName: string; email: string; password: string }): Promise<string>;
+    signup(input: { firstName: string; lastName: string; email: string; password: string }): Promise<{ message: string; verificationEmailSent: boolean }>;
+    resendVerification(email: string): Promise<string>;
     logout(): Promise<void>;
     reloadUser(): Promise<CurrentUser>;
     updateUser(user: CurrentUser): void;
@@ -66,9 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return reloadUser();
         },
         async signup(input) {
-            const result = await api<{ message: string }>("/auth/signup", {
+            return api<{ message: string; verificationEmailSent: boolean }>("/auth/signup", {
                 method: "POST",
                 body: JSON.stringify(input),
+            }, false);
+        },
+        async resendVerification(email) {
+            const result = await api<{ message: string }>("/auth/resend-verification", {
+                method: "POST",
+                body: JSON.stringify({ email }),
             }, false);
             return result.message;
         },

@@ -5,7 +5,6 @@ import { comparePassword, hashPassword } from "../utils/password.js";
 import { AppError } from "../utils/app-error.js";
 import type { SignupInput, VerifyEmailInput, ResendVerificationInput, LoginInput } from "../validators/auth.validators.js";
 import { generateSecureToken, hashToken } from "../utils/token.js";
-
 import { EMAIL_VERIFICATION_EXPIRY } from "../config/constants.js";
 import { sendVerificationEmail } from "../services/email.service.js";
 import { generateAccessToken } from "../utils/jwt.js";
@@ -41,9 +40,7 @@ export async function signup(
         const passwordHash = await hashPassword(password);
 
         const verificationToken = generateSecureToken();
-
         const verificationTokenHash = hashToken(verificationToken);
-
         const verificationExpiresAt = new Date(
             Date.now() + EMAIL_VERIFICATION_EXPIRY
         );
@@ -60,20 +57,16 @@ export async function signup(
         let verificationEmailSent = true;
 
         try {
-            await sendVerificationEmail(
-                email,
-                verificationToken,
-                firstName
-            );
+            await sendVerificationEmail(email, verificationToken, firstName);
         } catch (emailError) {
             verificationEmailSent = false;
-            console.error("Failed to send verification emaill:", emailError);
+            console.error("Failed to send verification email:", emailError);
         }
 
         res.status(201).json({
             message: verificationEmailSent
-                ? "Account created. Please check your email to verify your account."
-                : "Account created, but we couldn't send your verification email. Please request another.",
+                ? "Account created. Please check your email to verify it."
+                : "Account created. You can continue now and resend the verification email later.",
             verificationEmailSent,
             user: {
                 id: user.id,
@@ -115,14 +108,13 @@ export async function verifyEmail(
 ): Promise<void> {
     try {
         const { token } = req.body as VerifyEmailInput;
-
         const tokenHash = hashToken(token);
 
         const user = await UserModel.findOneAndUpdate(
             {
                 emailVerificationTokenHash: tokenHash,
                 emailVerificationExpiresAt: { $gt: new Date() },
-                emailVerified: false,
+                emailVerified: { $ne: true },
             },
             {
                 $set: { emailVerified: true },
@@ -131,21 +123,16 @@ export async function verifyEmail(
                     emailVerificationExpiresAt: "",
                 },
             },
-            {
-                new: true,
-            }
+            { new: true }
         );
 
         if (!user) {
-            throw new AppError(
-                400,
-                "This verification link is invalid or has expired."
-            );
+            throw new AppError(400, "This verification link is invalid or has expired.");
         }
 
         res.status(200).json({
             message: "Your email address has been verified successfully.",
-            emailVerified: user.emailVerified,
+            emailVerified: true,
         });
     } catch (error) {
         next(error);
@@ -159,10 +146,9 @@ export async function resendVerificationEmail(
 ): Promise<void> {
     try {
         const { email } = req.body as ResendVerificationInput;
-
         const user = await UserModel.findOne({
             email,
-            emailVerified: false,
+            emailVerified: { $ne: true },
             accountStatus: "active",
         });
 
@@ -176,21 +162,14 @@ export async function resendVerificationEmail(
         }
 
         const verificationToken = generateSecureToken();
-
         user.emailVerificationTokenHash = hashToken(verificationToken);
-
         user.emailVerificationExpiresAt = new Date(
             Date.now() + EMAIL_VERIFICATION_EXPIRY
         );
-
         await user.save();
 
         try {
-            await sendVerificationEmail(
-                user.email,
-                verificationToken,
-                user.firstName
-            );
+            await sendVerificationEmail(user.email, verificationToken, user.firstName);
         } catch (emailError) {
             console.error("Failed to resend verification email:", emailError);
         }
@@ -224,12 +203,6 @@ export async function login(
         if (user.accountStatus !== "active") {
             throw new AppError(
                 403, "Your account is currently disabled."
-            );
-        }
-
-        if (!user.emailVerified) {
-            throw new AppError(
-                403, "Please verify your email address before logging in."
             );
         }
 
@@ -346,13 +319,6 @@ export async function refresh(
             await session.save();
 
             throw new AppError(401, "Your session is no longer valid.");
-        }
-
-        if (!user.emailVerified) {
-            session.revokedAt = new Date();
-            await session.save();
-
-            throw new AppError(403, "Please verify your email address.");
         }
 
         const newRefreshToken = generateRefreshToken();

@@ -11,16 +11,10 @@ const envSchema = z.object({
 
     CLIENT_ORIGIN: z.url("CLIENT_ORIGIN must be a valid URL").default("http://localhost:5173"),
 
-    SMTP_HOST: z.string().min(1, "SMTP_HOST is required"),
-    SMTP_PORT: z.coerce.number().int().positive(),
-    SMTP_SECURE: z
-        .enum(["true", "false"]).
-        transform((value) => value === "true"),
-    SMTP_USER: z.string().min(1, "SMTP_USER is required"),
-    SMTP_PASS: z.string().min(1, "SMTP_PASS is required"),
-
+    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
     EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required"),
-    APP_URL: z.url("APP_URL must be a valid URL"),
+    APP_URL: z.url("APP_URL must be a valid URL").optional(),
+    RENDER_EXTERNAL_URL: z.url("RENDER_EXTERNAL_URL must be a valid URL").optional(),
 
     JWT_ACCESS_SECRET: z.string().min(1, "JWT_ACCESS_SECRET is required"),
 
@@ -46,13 +40,9 @@ export const config = {
     },
     clientOrigin: env.CLIENT_ORIGIN,
     email: {
-        smtpHost: env.SMTP_HOST,
-        smtpPort: env.SMTP_PORT,
-        smtpSecure: env.SMTP_SECURE,
-        smtpUser: env.SMTP_USER,
-        smtpPass: env.SMTP_PASS,
+        resendApiKey: env.RESEND_API_KEY,
         from: env.EMAIL_FROM,
-        appUrl: env.APP_URL,
+        appUrl: env.APP_URL ?? env.RENDER_EXTERNAL_URL ?? env.CLIENT_ORIGIN,
     },
     jwt: {
         accessSecret: env.JWT_ACCESS_SECRET,

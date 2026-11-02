@@ -17,21 +17,11 @@ services:
         sync: false
       - key: CLIENT_ORIGIN
         sync: false
-      - key: APP_URL
+      - key: RESEND_API_KEY
         sync: false
+      - key: EMAIL_FROM
+        value: "OWO <verify@mail.ifeoluwafolami.com>"
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_ACCESS_EXPIRY
         value: 15m
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_SECURE
-        value: "false"
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: EMAIL_FROM
-        sync: false
