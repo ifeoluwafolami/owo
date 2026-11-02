@@ -8,6 +8,7 @@ import { applyTheme, DEFAULT_THEME, themes, type ThemeId } from "../theme";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useToast } from "./Toast";
+import ToggleSwitch from "./ToggleSwitch";
 
 interface OnboardingProps {
     isOpen: boolean;
@@ -283,9 +284,7 @@ export default function Onboarding({ isOpen, onComplete }: OnboardingProps) {
                         ].map((notification) => (
                             <div key={notification.label} className="flex items-center justify-between border-b border-blue/10 py-4 last:border-0">
                                 <span className="flex items-center gap-2 font-semibold"><Bell className="size-4" />{notification.label}</span>
-                                <button type="button" role="switch" aria-checked={notification.value} onClick={() => notification.setValue(!notification.value)} className={`relative h-7 w-12 rounded-full ${notification.value ? "bg-blue" : "bg-blue/20"}`}>
-                                    <span className={`absolute top-1 size-5 rounded-full bg-light-blue transition-all ${notification.value ? "left-6" : "left-1"}`} />
-                                </button>
+                                <ToggleSwitch checked={notification.value} onChange={notification.setValue} label={notification.label} />
                             </div>
                         ))}
                     </div>
