@@ -14,7 +14,6 @@ const envSchema = z.object({
     RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
     EMAIL_FROM: z.string().min(1, "EMAIL_FROM is required"),
     APP_URL: z.url("APP_URL must be a valid URL").optional(),
-    RENDER_EXTERNAL_URL: z.url("RENDER_EXTERNAL_URL must be a valid URL").optional(),
 
     JWT_ACCESS_SECRET: z.string().min(1, "JWT_ACCESS_SECRET is required"),
 
@@ -42,7 +41,7 @@ export const config = {
     email: {
         resendApiKey: env.RESEND_API_KEY,
         from: env.EMAIL_FROM,
-        appUrl: env.APP_URL ?? env.RENDER_EXTERNAL_URL ?? env.CLIENT_ORIGIN,
+        appUrl: env.APP_URL ?? env.CLIENT_ORIGIN,
     },
     jwt: {
         accessSecret: env.JWT_ACCESS_SECRET,
