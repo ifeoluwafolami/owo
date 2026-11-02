@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import PrivateAmount from "./PrivateAmount";
 
 interface SavingsGoalCardProps {
     title: string;
@@ -59,12 +60,12 @@ export default function SavingsGoalCard({
     return (
         <div
             ref={cardRef}
-            className={`w-full rounded-2xl bg-light-blue p-6 text-blue shadow-lg ${className}`}
+            className={`min-w-0 w-full rounded-2xl bg-light-blue p-4 text-blue shadow-lg sm:p-6 ${className}`}
         >
-            <div className="mb-8 flex items-start justify-between gap-4">
-                <div>
+            <div className="mb-6 flex items-start justify-between gap-3 sm:mb-8 sm:gap-4">
+                <div className="min-w-0">
                     {/* <p className="mb-2 text-sm tracking-widest uppercase opacity-70">Savings target</p> */}
-                    <h4 className="text-2xl font-semibold capitalize tracking-wide">{title}</h4>
+                    <h4 className="break-words text-xl font-semibold capitalize tracking-wide sm:text-2xl">{title}</h4>
                     {targetDate && (
                         <p className="mt-1 text-sm text-blue/60 uppercase">
                             {new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(targetDate))}
@@ -93,11 +94,11 @@ export default function SavingsGoalCard({
             <div className="mt-4 flex justify-between gap-4 text-sm">
                 <div>
                     <p className="opacity-60">Saved</p>
-                    <p className="text-lg font-semibold tracking-wider">{currencyFormatter.format(savedAmount)}</p>
+                    <PrivateAmount value={currencyFormatter.format(savedAmount)} className="text-base font-semibold tracking-wide sm:text-lg sm:tracking-wider" />
                 </div>
                 <div className="text-right">
                     <p className="opacity-60">Target</p>
-                    <p className="text-lg font-semibold tracking-wider">{currencyFormatter.format(targetAmount)}</p>
+                    <PrivateAmount value={currencyFormatter.format(targetAmount)} className="text-base font-semibold tracking-wide sm:text-lg sm:tracking-wider" />
                 </div>
             </div>
         </div>
